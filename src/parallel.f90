@@ -14,7 +14,13 @@ module parallel
 
   public :: init_parallel, &
             fin_parallel,  &
-            error_finalize
+            error_finalize, &
+            write_message
+
+  interface write_message
+     module procedure write_message_array
+     module procedure write_message_scalar
+  end interface write_message
 
 contains
 !-------------------------------------------------------------------------------
@@ -48,15 +54,39 @@ contains
 
   end subroutine fin_parallel
 !-------------------------------------------------------------------------------
-  subroutine error_finalize(message)
+  subroutine error_finalize(message_t)
     implicit none
-    character(*),intent(in) :: message
+    character(*),intent(in) :: message_t
     integer :: ierr
 
-    if(if_root_global)write(*,"(A)")message
+    if(if_root_global)write(*,"(A)")trim(message_t)
     call MPI_Finalize(ierr)
     stop
 
   end subroutine error_finalize
+!-------------------------------------------------------------------------------
+  subroutine write_message_array(message_t)
+    implicit none
+    character(*),intent(in) :: message_t(:)
+    integer :: ndim, i
+
+    if(if_root_global)then
+      ndim = ubound(message_t, 1)
+      do i = 1,ndim
+        write(*,"(A)")trim(message_t(i))
+      end do
+    end if
+
+  end subroutine write_message_array
+!-------------------------------------------------------------------------------
+  subroutine write_message_scalar(message_t)
+    implicit none
+    character(*),intent(in) :: message_t
+
+    if(if_root_global)then
+        write(*,"(A)")trim(message_t)
+    end if
+
+  end subroutine write_message_scalar
 !-------------------------------------------------------------------------------
 end module parallel

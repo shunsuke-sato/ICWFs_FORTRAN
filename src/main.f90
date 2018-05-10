@@ -5,9 +5,7 @@ program main
 
   call init_parallel
 
-  write(*,*)"Hello world!!"
-  write(*,*)"comm_id_global = ",comm_id_global
-  write(*,*)"Pi = ",pi
+  call parameters
 
   call fin_parallel
 
