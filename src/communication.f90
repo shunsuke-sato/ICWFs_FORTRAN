@@ -1,8 +1,3 @@
-!---------------------------------------------------!
-! Copyright (c) 2017 Shunsuke A. Sato               !
-! Released under the MIT license                    !
-! https://opensource.org/licenses/mit-license.php   !
-!---------------------------------------------------!
 module communication
   use mpi
   use parallel
