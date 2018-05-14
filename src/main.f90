@@ -6,6 +6,7 @@ program main
   call init_parallel
 
   call parameters
+  call operators
 
   call fin_parallel
 
