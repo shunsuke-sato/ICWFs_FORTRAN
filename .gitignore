@@ -11,6 +11,7 @@
 *.mod
 
 # Executable files
+icwf
 
 # Libraries
 *.lib
