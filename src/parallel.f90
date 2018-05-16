@@ -12,6 +12,9 @@ module parallel
 ! OMP
   integer, public :: nthread_omp
 
+! temporal arrays
+  character(len=1024),public :: message(64)
+
   public :: init_parallel, &
             fin_parallel,  &
             error_finalize, &
@@ -21,6 +24,11 @@ module parallel
      module procedure write_message_array
      module procedure write_message_scalar
   end interface write_message
+
+  interface error_finalize
+     module procedure error_finalize_array
+     module procedure error_finalize_scalar
+  end interface error_finalize
 
 contains
 !-------------------------------------------------------------------------------
@@ -54,7 +62,25 @@ contains
 
   end subroutine fin_parallel
 !-------------------------------------------------------------------------------
-  subroutine error_finalize(message_t)
+  subroutine error_finalize_array(message_t)
+    implicit none
+    character(*),intent(in) :: message_t(:)
+    integer :: ierr
+    integer :: ndim, i
+
+    if(if_root_global)then
+      ndim = ubound(message_t, 1)
+      do i = 1,ndim
+        write(*,"(A)")trim(message_t(i))
+      end do
+    end if
+
+    call MPI_Finalize(ierr)
+    stop
+
+  end subroutine error_finalize_array
+!-------------------------------------------------------------------------------
+  subroutine error_finalize_scalar(message_t)
     implicit none
     character(*),intent(in) :: message_t
     integer :: ierr
@@ -63,7 +89,7 @@ contains
     call MPI_Finalize(ierr)
     stop
 
-  end subroutine error_finalize
+  end subroutine error_finalize_scalar
 !-------------------------------------------------------------------------------
   subroutine write_message_array(message_t)
     implicit none

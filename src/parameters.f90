@@ -20,6 +20,7 @@ subroutine shin_metiu_parameters
   real(8) :: mass_elec, mass_ion
 
 
+  sampling_method = sampling_from_manybody_wf
 
 ! Parameters for Shin-Metiu model
   lsize_elec = 40d0

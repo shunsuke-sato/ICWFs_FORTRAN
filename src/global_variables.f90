@@ -10,12 +10,11 @@ module global_variables
   real(8),parameter :: fs = 1d0/0.024189d0
 
 ! System parameters
-
   integer :: num_species
   type(species_t),allocatable :: spec(:)
 
-! temporal arrays
-  character(len=1024) :: message(64)
+  integer :: sampling_method
+  integer,parameter :: sampling_from_manybody_wf = 0
 
 
 end module global_variables

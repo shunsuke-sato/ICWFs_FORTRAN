@@ -8,6 +8,12 @@ program main
   call parameters
   call operators
 
+  call initial_state
+!  call initial_distribution.f90
+
+!  call propagation.f90
+
+
   call fin_parallel
 
 end program main

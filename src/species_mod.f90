@@ -16,6 +16,7 @@ module species
     complex(8),allocatable :: zwfn(:,:)  ! wavefunction
     real(8),allocatable :: r_particle(:,:) ! Position of particle
     real(8),allocatable :: v0(:) ! One-body potential
+    real(8),allocatable :: rho_ini(:) ! Initial one-body density
 
   end type species_t
 
@@ -49,6 +50,7 @@ module species
       allocate(spec%x(ndim,ngrid_tot))
       allocate(spec%zwfn(ngrid_tot,nparticle))
       allocate(spec%v0(ngrid_tot))
+      allocate(spec%rho_ini(ngrid_tot))
       allocate(spec%r_particle(ndim,nparticle))
 
 
