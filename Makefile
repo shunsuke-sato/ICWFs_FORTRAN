@@ -9,7 +9,7 @@ OBJ_dir = $(addprefix object/,$(OBJ))
 
 PROG = icwf
 
-$(PROG):species_mod.o parallel.o global_variables.o $(OBJ)
+$(PROG):math_mod.o species_mod.o parallel.o global_variables.o $(OBJ)
 	$(FC) -o $(PROG) $(OBJ_dir) $(LN)
 
 main.o:main.f90

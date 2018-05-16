@@ -2,11 +2,8 @@ module global_variables
   use mpi
   use parallel
   use species
+  use math_mod
   implicit none
-
-! mathematical constants
-  real(8),parameter :: pi = 4d0*atan(1d0)
-  complex(8),parameter :: zI = (0d0,1d0)
 
 ! Physical constants
   real(8),parameter :: ev = 1d0/27.2114d0
