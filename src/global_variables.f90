@@ -3,6 +3,8 @@ module global_variables
   use parallel
   use species
   use math_mod
+  use interaction_mod
+  use finite_difference_mod
   implicit none
 
 ! Physical constants

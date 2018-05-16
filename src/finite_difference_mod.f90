@@ -21,20 +21,18 @@ contains
 !-----------------------------------------------------------------------------------------
   subroutine laplacian_real(f_in, f_out, nx, dx, factor)
     implicit none
-    real(8),intent(in) :: f_in(:), dx(:)
+    real(8),intent(in)  :: f_in(:)
     real(8),intent(out) :: f_out(:)
-    integer,intent(in) :: nx(:)
-    real(8),intent(in),optional :: factor
+    real(8),intent(in)  :: dx(:)
+    integer,intent(in)  :: nx(:)
+    real(8),intent(in)  :: factor
     integer :: ndim
-    real(8) :: factor0
 
     ndim = ubound(nx, 1)
-    factor0 = 1d0
-    if(present(factor))factor0 = factor
 
     select case(ndim)
     case(1)
-      call laplacian_real_1d(f_in, f_out, nx(1), dx(1), factor0)
+      call laplacian_real_1d(f_in, f_out, nx(1), dx(1), factor)
     case default
       write(*,"(A)")"Fatal Error: Invalid dimension in Laplacian operator"
       stop
@@ -47,18 +45,16 @@ contains
     complex(8),intent(in)   :: zf_in(:)
     complex(8),intent(out)  :: zf_out(:)
     real(8),intent(in)      :: dx(:)
-    integer,intent(in) :: nx(:)
-    real(8),intent(in),optional :: factor
+    integer,intent(in)      :: nx(:)
+    real(8),intent(in)      :: factor
     integer :: ndim
     real(8) :: factor0
 
     ndim = ubound(nx, 1)
-    factor0 = 1d0
-    if(present(factor))factor0 = factor
 
     select case(ndim)
     case(1)
-      call laplacian_complex_1d(zf_in, zf_out, nx(1), dx(1), factor0)
+      call laplacian_complex_1d(zf_in, zf_out, nx(1), dx(1), factor)
     case default
       write(*,"(A)")"Fatal Error: Invalid dimension in Laplacian operator"
       stop
@@ -67,16 +63,17 @@ contains
   end subroutine laplacian_complex
 !-----------------------------------------------------------------------------------------
 ! NOTE: nx has to be equal to or larger than 6
-  subroutine laplacian_real_1d(f_in, f_out, nx, dx, factor0)
+  subroutine laplacian_real_1d(f_in, f_out, nx, dx, factor)
     implicit none
-    integer,intent(in) :: nx
-    real(8),intent(in) :: f_in(nx), dx, factor0
+    integer,intent(in)  :: nx
+    real(8),intent(in)  :: f_in(nx)
     real(8),intent(out) :: f_out(nx)
+    real(8),intent(in)  :: dx, factor
     real(8) :: dx_i2
     real(8) :: c0,c1,c2,c3,c4
     integer :: ix
 
-    dx_i2 = factor0/dx**2
+    dx_i2 = factor/dx**2
     c0 = ct0*dx_i2
     c1 = ct1*dx_i2
     c2 = ct2*dx_i2
@@ -123,17 +120,17 @@ contains
   end subroutine laplacian_real_1d
 !-----------------------------------------------------------------------------------------
 ! NOTE: nx has to be equal to or larger than 6
-  subroutine laplacian_complex_1d(zf_in, zf_out, nx, dx, factor0)
+  subroutine laplacian_complex_1d(zf_in, zf_out, nx, dx, factor)
     implicit none
     integer,intent(in) :: nx
     complex(8),intent(in)  :: zf_in(nx)
     complex(8),intent(out) :: zf_out(nx)
-    real(8),intent(in) :: dx, factor0
+    real(8),intent(in) :: dx, factor
     real(8) :: dx_i2
     real(8) :: c0,c1,c2,c3,c4
     integer :: ix
 
-    dx_i2 = factor0/dx**2
+    dx_i2 = factor/dx**2
     c0 = ct0*dx_i2
     c1 = ct1*dx_i2
     c2 = ct2*dx_i2
