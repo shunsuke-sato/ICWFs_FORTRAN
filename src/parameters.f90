@@ -8,6 +8,12 @@ subroutine parameters
 
   call shin_metiu_parameters
 
+
+  total_particle_num = sum(spec(:)%nparticle)
+  write(message(1),"(I7)")total_particle_num
+  message(1) = "total number of particles = "//trim(message(1))
+  call write_message(message(1))
+
   call write_message('Finish: parameters')
 
 end subroutine parameters

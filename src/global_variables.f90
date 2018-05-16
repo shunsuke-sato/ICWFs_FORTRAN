@@ -12,6 +12,7 @@ module global_variables
 ! System parameters
   integer :: num_species
   type(species_t),allocatable :: spec(:)
+  integer :: total_particle_num
 
   integer :: sampling_method
   integer,parameter :: sampling_from_manybody_wf = 0
