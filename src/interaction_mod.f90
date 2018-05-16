@@ -26,11 +26,11 @@ contains
     
 !    pot = 0d0
 ! electron potential in Shin-Metiu model
-!    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
-!          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
+    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
+          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
 
 ! harmonic oscillator
-    pot = 0.5d0*x(1)**2
+!    pot = 0.5d0*x(1)**2
           
 
   end function one_body_pot_1

@@ -29,8 +29,8 @@ subroutine shin_metiu_parameters
   sampling_method = sampling_from_manybody_wf
 
 ! Parameters for Shin-Metiu model
-  lsize_elec = 20d0
-  nx_elec = 200
+  lsize_elec = 200d0
+  nx_elec = 2000
   mass_elec = 1d0
 
   lsize_ion  = 18d0

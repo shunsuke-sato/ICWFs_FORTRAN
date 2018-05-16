@@ -4,7 +4,7 @@ subroutine init_manybody_wf_shin_metiu
   integer,parameter :: Rion = -4d0
   integer,parameter :: norb = 2
   real(8),parameter :: res_epsilon = 1d-8
-  real(8),parameter :: dt_imag = 0.0001d0
+  real(8),parameter :: dt_imag = 0.01d0
   real(8),allocatable :: phi(:,:)
   real(8),allocatable :: veff(:),phi_t(:),hphi_t(:)
   integer,parameter :: nt_imag_max = 100000
@@ -35,12 +35,11 @@ subroutine init_manybody_wf_shin_metiu
 
 ! setting effective potential
   do ix = 1,nx
-    xe(1) = spec(1)%x_ini(1) + spec(1)%dx(1)*ix_e
+    xe(1) = spec(1)%x_ini(1) + spec(1)%dx(1)*ix
     xi(1) = Rion
     veff(ix) = two_body_pot_1_2(xe,xi)
   end do
-!  veff(:) = veff(:) + spec(1)%v0(:)
-  veff(:) = spec(1)%v0(:)
+  veff(:) = veff(:) + spec(1)%v0(:)
 
 ! imaginary time propagation
   do it = 1, nt_imag_max
@@ -53,7 +52,7 @@ subroutine init_manybody_wf_shin_metiu
     end do
     call gram_schmidt
 
-    if(mod(it,10) == 0)then
+    if(mod(it,100) == 0)then
       write(message(1), "(I9)")it
       message(1) = "Iter ="//trim(message(1))
       call write_message(message(1))
@@ -65,7 +64,7 @@ subroutine init_manybody_wf_shin_metiu
         residual(iorb) = sum((hphi_t - eps(iorb)*phi_t)**2)*dx
         write(message(1), "(I7)")iorb
         message(1) = "iorb = "//trim(message(1))
-        write(message(2), "(e16.6e3)")eps(iorb) !+ one_body_pot_2(xi)
+        write(message(2), "(e16.6e3)")eps(iorb) + one_body_pot_2(xi)
         message(2) = "single-particle energy = "//trim(message(2))
         write(message(3), "(e16.6e3)")residual(iorb)
         message(3) = "residual               = "//trim(message(3))
