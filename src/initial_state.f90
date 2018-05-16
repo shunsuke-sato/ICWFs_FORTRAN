@@ -7,6 +7,7 @@ subroutine initial_state
   select case(sampling_method)
   case(sampling_from_manybody_wf)
 
+    call allocate_manybody_wf
     call init_manybody_wf
 
   case default
@@ -20,7 +21,7 @@ subroutine initial_state
 
 end subroutine initial_state
 !-----------------------------------------------------------------------------------------
-subroutine init_manybody_wf
+subroutine allocate_manybody_wf
   use global_variables
   implicit none
   integer :: nx(3),ispec,iparticle,itot_particle
@@ -43,5 +44,14 @@ subroutine init_manybody_wf
     message(2) = '           : total_particle_num = '//trim(message(2))
     call error_finalize(message(1:2))
   end select
+
+end subroutine allocate_manybody_wf
+!-----------------------------------------------------------------------------------------
+subroutine init_manybody_wf
+  use global_variables
+  implicit none
+
+! Shim-Metiu molel
+  call init_manybody_wf_shin_metiu
 
 end subroutine init_manybody_wf
