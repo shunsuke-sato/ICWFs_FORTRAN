@@ -2,6 +2,7 @@ subroutine init_manybody_wf_shin_metiu
   use global_variables
   implicit none
   integer,parameter :: Rion = -4d0
+  real(8),parameter :: sigma = 1d0/sqrt(2.85d0)
   integer,parameter :: norb = 2
   real(8),parameter :: res_epsilon = 1d-8
   real(8),parameter :: dt_imag = 0.01d0
@@ -78,17 +79,12 @@ subroutine init_manybody_wf_shin_metiu
   end do
 
 
-
-!! FIXME:
-!! Initialization of many-body wavefunction for Shin-Metiue will be implemented later.
-!! The gaussian is employed temporary.
-
   do ix_i = 1, spec(2)%ngrid(1)
     xi = spec(2)%x_ini(1) + spec(2)%dx(1)*ix_i
     do ix_e = 1, spec(1)%ngrid(1)
       xe = spec(1)%x_ini(1) + spec(1)%dx(1)*ix_e
       
-      zwfn_ini_2p(ix_e,ix_i) = exp(-0.5d0*abs(xe(1))**2 -0.5d0*abs(xi(1))**2)
+      zwfn_ini_2p(ix_e,ix_i) = phi(ix_e,norb)*exp(-0.5d0*((xi(1)-Rion)/sigma)**2)
 
     end do
   end do
