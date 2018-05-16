@@ -2,6 +2,7 @@ module species
   implicit none
 
   type species_t
+    character(len=256) :: name         ! Name of species
     integer :: ndim                      ! Dimensionality
     integer :: nparticle              ! Number of particles
     real(8) :: mass                      ! Mass of particle
@@ -19,12 +20,16 @@ module species
   end type species_t
 
   contains
-    subroutine init_species(spec,ndim, nparticle, mass, ngrid, x_ini, x_fin)
+    subroutine init_species(spec,ndim, nparticle, mass, ngrid, x_ini, x_fin, name)
       type(species_t),intent(inout)  :: spec
       integer,intent(in) :: ndim, nparticle, ngrid(1:ndim)
       real(8),intent(in) :: mass, x_ini(1:ndim), x_fin(1:ndim)
+      character(*), intent(in), optional :: name
       integer :: ngrid_tot
       integer :: i,j,k,l
+
+      spec%name      = 'nameless'
+      if(present(name)) spec%name      = trim(name)
 
       spec%ndim      = ndim
       spec%nparticle = nparticle

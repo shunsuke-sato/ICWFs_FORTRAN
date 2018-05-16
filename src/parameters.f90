@@ -36,8 +36,8 @@ subroutine shin_metiu_parameters
 ! the first species  is electron
 ! the second species is ion
 
-  call init_species(spec(1),1 ,1 , mass_elec, nx_elec, -0.5d0*lsize_elec, 0.5*lsize_elec)
-  call init_species(spec(2),1 ,1 , mass_ion,  nx_ion , -0.5d0*lsize_ion , 0.5*lsize_ion)
+  call init_species(spec(1),1 ,1 , mass_elec, nx_elec, -0.5d0*lsize_elec, 0.5*lsize_elec, "electron")
+  call init_species(spec(2),1 ,1 , mass_ion,  nx_ion , -0.5d0*lsize_ion , 0.5*lsize_ion,  "ion")
 
 
 end subroutine shin_metiu_parameters
