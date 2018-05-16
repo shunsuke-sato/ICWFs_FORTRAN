@@ -17,5 +17,7 @@ module global_variables
   integer :: sampling_method
   integer,parameter :: sampling_from_manybody_wf = 0
 
+! 
+  complex(8),allocatable :: zwfn_ini_2p(:,:),zwfn_ini_3p(:,:,:)
 
 end module global_variables
