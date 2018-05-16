@@ -8,8 +8,8 @@ module interaction_mod
 
 ! Shin-Metiu model parameters
   real(8),parameter :: L = 19d0
-  real(8),parameter :: Rf = 7d0
-  real(8),parameter :: Rl = 4.4d0
+  real(8),parameter :: Rf = 5d0
+  real(8),parameter :: Rl = 4.0d0
   real(8),parameter :: Rr = 3.1d0
 
   public :: one_body_pot_1, &
@@ -26,8 +26,12 @@ contains
     
 !    pot = 0d0
 ! electron potential in Shin-Metiu model
-    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
-          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
+!    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
+!          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
+
+! harmonic oscillator
+    pot = 0.5d0*x(1)**2
+          
 
   end function one_body_pot_1
 

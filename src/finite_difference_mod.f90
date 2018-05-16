@@ -3,12 +3,18 @@ module finite_difference_mod
   
   private
 
-! Laplacian coefficients (7-point formula)
-  real(8),parameter :: ct0 = -49d0/18d0, &
-                       ct1 = 3d0/2d0,    &
-                       ct2 = -3d0/20d0,  &
-                       ct3 = 1d0/90d0
+!! Laplacian coefficients (7-point formula)
+!  real(8),parameter :: ct0 = -49d0/18d0, &
+!                       ct1 = 3d0/2d0,    &
+!                       ct2 = -3d0/20d0,  &
+!                       ct3 = 1d0/90d0
 
+! Laplacian coefficients (7-point formula)
+  real(8),parameter :: ct0 = -2d0, &
+                       ct1 = 1d0,    &
+                       ct2 = 0d0,  &
+                       ct3 = 0d0
+!
 
   interface laplacian
      module procedure laplacian_complex
