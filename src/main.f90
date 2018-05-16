@@ -4,6 +4,7 @@ program main
   implicit none
 
   call init_parallel
+  call initialize_random_number_generator
 
   call parameters
   call operators

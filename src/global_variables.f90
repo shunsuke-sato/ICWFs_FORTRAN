@@ -5,6 +5,7 @@ module global_variables
   use math_mod
   use interaction_mod
   use finite_difference_mod
+  use random_number_mod
   implicit none
 
 ! Physical constants

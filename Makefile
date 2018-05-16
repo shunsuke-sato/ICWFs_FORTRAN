@@ -13,6 +13,7 @@ $(PROG):math_mod.o \
         species_mod.o \
         parallel.o \
         finite_difference_mod.o \
+        random_number_mod.o \
         interaction_mod.o \
         global_variables.o $(OBJ)
 	$(FC) -o $(PROG) $(OBJ_dir) $(LN)
