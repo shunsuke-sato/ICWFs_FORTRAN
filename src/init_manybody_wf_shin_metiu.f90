@@ -5,7 +5,7 @@ subroutine init_manybody_wf_shin_metiu
   real(8),parameter :: sigma = 1d0/sqrt(2.85d0)
   integer,parameter :: norb = 2
   real(8),parameter :: res_epsilon = 1d-8
-  real(8),parameter :: dt_imag = 0.01d0
+  real(8),parameter :: dt_imag = 0.005d0
   real(8),allocatable :: phi(:,:)
   real(8),allocatable :: veff(:),phi_t(:),hphi_t(:)
   integer,parameter :: nt_imag_max = 100000
