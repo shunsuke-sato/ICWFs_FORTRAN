@@ -5,6 +5,14 @@ subroutine parameters
 
   call write_message('Start: parameters')
 
+! propagation parameters
+  propagation_method = HERMITIAN_LIMIT
+  num_trajectory = 100
+  time_step = 0.1d0
+  propagation_time = 10d0
+  num_time_step = aint(propagation_time/time_step)+1
+
+! model parameters
   call shin_metiu_parameters
 
 

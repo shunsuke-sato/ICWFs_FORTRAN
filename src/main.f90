@@ -12,7 +12,7 @@ program main
   call initial_state
 !  call initial_distribution.f90
 
-!  call propagation.f90
+  call propagation
 
 
   call fin_parallel

@@ -22,7 +22,17 @@ module global_variables
   integer :: sampling_method
   integer,parameter :: sampling_from_manybody_wf = 0
 
-! 
+
+! propagation
+  integer :: propagation_method
+  integer :: num_trajectory
+  real(8) :: time_step, propagation_time
+  integer :: num_time_step
+
+  integer,parameter :: HERMITIAN_LIMIT = 1
+
+
+! temporal
   complex(8),allocatable :: zwfn_ini_2p(:,:),zwfn_ini_3p(:,:,:)
   real(8),allocatable :: rho_cumulative_prob(:)
 

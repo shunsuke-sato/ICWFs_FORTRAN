@@ -384,12 +384,12 @@ module random_number_mod
   private
 
   public :: initialize_random_number_generator, &
-            ranlux_double
+            random_double
 
-  interface ranlux_double
-     module procedure ranlux_double_scalar
-     module procedure ranlux_double_vector
-  end interface ranlux_double
+  interface random_double
+     module procedure random_double_scalar
+     module procedure random_double_vector
+  end interface random_double
 
   contains
 
@@ -406,7 +406,7 @@ module random_number_mod
     end subroutine initialize_random_number_generator
 
 !------------------------------------------------------------------------------
-    subroutine ranlux_double_scalar(rvec)
+    subroutine random_double_scalar(rvec)
       implicit none
       real(8),intent(out) :: rvec
       integer,parameter :: len4 = 2
@@ -419,10 +419,10 @@ module random_number_mod
       int1 = aint(rvec4(1)*1d6)*10000000 + aint(rvec4(2)*1d7)
       rvec = dble(int1)*1d-13
 
-    end subroutine ranlux_double_scalar
+    end subroutine random_double_scalar
 
 !------------------------------------------------------------------------------
-    subroutine ranlux_double_vector(rvec)
+    subroutine random_double_vector(rvec)
       implicit none
       real(8),intent(out) :: rvec(:)
       integer :: len
@@ -440,7 +440,7 @@ module random_number_mod
 
       end do
 
-    end subroutine ranlux_double_vector
+    end subroutine random_double_vector
 !------------------------------------------------------------------------------
 
 
