@@ -14,6 +14,8 @@ module interaction_mod
 
   public :: one_body_pot_1, &
             one_body_pot_2, &
+            two_body_pot_1, &
+            two_body_pot_2, &
             two_body_pot_1_2
 
 
@@ -48,6 +50,28 @@ contains
 
 
   end function one_body_pot_2
+
+!-----------------------------------------------------------------------------------------
+  function two_body_pot_1(x1,x2) result(pot)
+    implicit none
+    integer,parameter :: ndim1 = 1
+    real(8),intent(in) :: x1(1:ndim1), x2(1:ndim1)
+    real(8) :: pot
+    
+    pot = 0d0
+
+  end function two_body_pot_1
+
+!-----------------------------------------------------------------------------------------
+  function two_body_pot_2(x1,x2) result(pot)
+    implicit none
+    integer,parameter :: ndim1 = 1
+    real(8),intent(in) :: x1(1:ndim1), x2(1:ndim1)
+    real(8) :: pot
+    
+    pot = 0d0
+
+  end function two_body_pot_2
 
 !-----------------------------------------------------------------------------------------
   function two_body_pot_1_2(x1,x2) result(pot)
