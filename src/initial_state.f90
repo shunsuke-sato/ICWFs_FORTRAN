@@ -9,7 +9,7 @@ subroutine initial_state
 
     call allocate_manybody_wf
     call init_manybody_wf
-    call init_onebody_density
+    call init_cumulative_probability_distribution
 
   case default
     write(message(1),"(I7)")sampling_method
@@ -25,64 +25,82 @@ end subroutine initial_state
 subroutine allocate_manybody_wf
   use global_variables
   implicit none
-  integer :: nx(3),ispec,iparticle,itot_particle
+  integer,allocatable :: nx(:)
+  integer :: ip, ispec
 
-  select case(total_particle_num)
+  allocate(nx(num_total_particle))
+  do ip = 1, num_total_particle
+    ispec = itable_particle2species(ip)
+    nx(ip) = spec(ispec)%ngrid_tot
+  end do
+ 
+  select case(num_total_particle)
   case(2)
-    itot_particle = 0
-    do ispec = 1, num_species
-      do iparticle = 1, spec(ispec)%nparticle
-        itot_particle = itot_particle + 1
-        nx(itot_particle) = spec(ispec)%ngrid_tot
-      end do
-    end do
-
     allocate(zwfn_ini_2p(nx(1), nx(2)))
-
   case default
-    write(message(2),"(I7)")total_particle_num
+    write(message(2),"(I7)")num_total_particle
     message(1) = 'Fatal Error: init_manybody_wf is not implemented for'
-    message(2) = '           : total_particle_num = '//trim(message(2))
+    message(2) = '           : num_total_particle = '//trim(message(2))
     call error_finalize(message(1:2))
   end select
 
 end subroutine allocate_manybody_wf
 !-----------------------------------------------------------------------------------------
-subroutine init_onebody_density
+subroutine init_cumulative_probability_distribution
   use global_variables
   implicit none
-  integer :: ix
-  real(8) :: dV
+  integer :: ip ,ispec
+  integer :: ix1, ix2, ix
+  integer :: nx1, nx2
+  integer :: ngrid_tot
+  real(8) :: dV, ss
 
-  select case(total_particle_num)
+  dV = 1d0
+  do ip = 1, num_total_particle
+    ispec = itable_particle2species(ip)
+    dV = dV * product(spec(ispec)%dx(:))
+  end do
+
+  ngrid_tot = 1
+  do ip = 1, num_total_particle
+    ispec = itable_particle2species(ip)
+    ngrid_tot = ngrid_tot * spec(ispec)%ngrid_tot
+  end do
+  allocate(rho_cumulative_prob(ngrid_tot))
+
+  select case(num_total_particle)
   case(2)
 
-! compute density for the first spieces
-    if(num_species == 1)then
-      dV = product(spec(1)%dx(:))
-    else if(num_species == 2)then
-      dV = product(spec(2)%dx(:))
-    end if
+    
+    nx1 =  spec(itable_particle2species(1))%ngrid_tot
+    nx2 =  spec(itable_particle2species(2))%ngrid_tot
 
-    do ix = 1,spec(1)%ngrid_tot
-      spec(1)%rho_ini(ix) = sum(abs(zwfn_ini_2p(ix,:))**2)*dV
+
+! normalize
+    ss = sum(abs(zwfn_ini_2p(:,:))**2)*dV
+    zwfn_ini_2p = zwfn_ini_2p/sqrt(ss)
+
+    ix = 0
+    ss = 0d0
+    do ix2 = 1, nx2
+      do ix1 = 1, nx1
+        ix = ix + 1
+        ss = ss + abs(zwfn_ini_2p(ix1,ix2))**2
+        rho_cumulative_prob(ix) = ss
+      end do
     end do
 
-    if(num_species == 2)then
-      dV = product(spec(1)%dx(:))
-      do ix = 1,spec(2)%ngrid_tot
-        spec(2)%rho_ini(ix) = sum(abs(zwfn_ini_2p(:,ix))**2)*dV
-      end do
-    end if
+    rho_cumulative_prob = rho_cumulative_prob/ss
+    rho_cumulative_prob(ngrid_tot) = 1d0
 
   case default
-    write(message(2),"(I7)")total_particle_num
+    write(message(2),"(I7)")num_total_particle
     message(1) = 'Fatal Error: init_onebody_density is not implemented for'
     message(2) = '           : total_particle_num = '//trim(message(2))
     call error_finalize(message(1:2))
   end select
 
-end subroutine init_onebody_density
+end subroutine init_cumulative_probability_distribution
 !-----------------------------------------------------------------------------------------
 subroutine init_manybody_wf
   use global_variables

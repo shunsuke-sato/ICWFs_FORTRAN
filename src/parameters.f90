@@ -1,17 +1,31 @@
 subroutine parameters
   use global_variables
   implicit none
-  integer :: ndim, nparticle, ngrid
-  real(8) :: mass, x_ini, x_fin
+  integer :: ispec, ip, ipt
 
   call write_message('Start: parameters')
 
   call shin_metiu_parameters
 
 
-  total_particle_num = sum(spec(:)%nparticle)
-  write(message(1),"(I7)")total_particle_num
+  num_total_particle = sum(spec(:)%nparticle)
+  write(message(1),"(I7)")num_total_particle
   message(1) = "total number of particles = "//trim(message(1))
+
+! table to convert from particle index to species index
+  allocate(itable_particle2species(num_total_particle))
+  
+  ip = 0
+  do ispec = 1, num_species
+    do ipt = 1, spec(ispec)%nparticle
+      ip = ip + 1
+      itable_particle2species(ip) = ispec
+      
+    end do
+  end do
+
+
+
   call write_message(message(1))
 
   call write_message('Finish: parameters')
