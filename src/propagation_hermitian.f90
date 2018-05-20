@@ -14,24 +14,21 @@ subroutine propagation_hermitian
     end do
   end do
 
+end subroutine propagation_hermitian
 
-  contains
+subroutine dt_evolve_Runge_Kutta4_hermitian
+  use global_variables
+  implicit none
 
+  type species_temporal
+     complex(8),allocatable :: zwfn(:,:)  ! wavefunction
+     real(8),allocatable :: r_particle(:,:) ! Position of particle
+  end type species_temporal
 
-    subroutine dt_evolve_Runge_Kutta4
-      implicit none
-
-      type species_temporal
-         complex(8),allocatable :: zwfn(:,:)  ! wavefunction
-         real(8),allocatable :: r_particle(:,:) ! Position of particle
-      end type species_temporal
-
-      type(species_temporal) :: spec_tmp(num_species,4)
+  type(species_temporal) :: spec_tmp(num_species,4)
       
 
 
 
-    end subroutine dt_evolve_Runge_Kutta4
+end subroutine dt_evolve_Runge_Kutta4_hermitian
 
-
-end subroutine propagation_hermitian
