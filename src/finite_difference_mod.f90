@@ -24,8 +24,15 @@ module finite_difference_mod
      module procedure gradient_complex
      module procedure gradient_real
   end interface gradient
+  
+  interface gradient_local
+     module procedure gradient_local_complex
+     module procedure gradient_local_real
+  end interface gradient_local
 
-  public :: laplacian
+  public :: laplacian, &
+            gradient, &
+            gradient_local
 
 contains
 !-----------------------------------------------------------------------------------------
@@ -327,5 +334,155 @@ contains
 
 
   end subroutine gradient_complex_1d
+!-----------------------------------------------------------------------------------------
+  subroutine gradient_local_real(f_in, f_out, nx, dx, factor, ix)
+    implicit none
+    real(8),intent(in)  :: f_in(:)
+    real(8),intent(out) :: f_out(:)
+    real(8),intent(in)  :: dx(:)
+    integer,intent(in)  :: nx(:)
+    real(8),intent(in)  :: factor
+    integer,intent(in)  :: ix
+    integer :: ndim
+
+    ndim = ubound(nx, 1)
+
+    select case(ndim)
+    case(1)
+      call gradient_local_real_1d(f_in, f_out, nx(1), dx(1), factor, ix)
+    case default
+      write(*,"(A)")"Fatal Error: Invalid dimension in gradient operator"
+      stop
+    end select
+
+  end subroutine gradient_local_real
+!-----------------------------------------------------------------------------------------
+  subroutine gradient_local_complex(zf_in, zf_out, nx, dx, factor, ix)
+    implicit none
+    complex(8),intent(in)  :: zf_in(:)
+    complex(8),intent(out) :: zf_out(:)
+    real(8),intent(in)     :: dx(:)
+    integer,intent(in)     :: nx(:)
+    real(8),intent(in)     :: factor
+    integer,intent(in)     :: ix
+    integer :: ndim
+
+    ndim = ubound(nx, 1)
+
+    select case(ndim)
+    case(1)
+      call gradient_local_complex_1d(zf_in, zf_out, nx(1), dx(1), factor, ix)
+    case default
+      write(*,"(A)")"Fatal Error: Invalid dimension in gradient operator"
+      stop
+    end select
+
+  end subroutine gradient_local_complex
+!-----------------------------------------------------------------------------------------
+! NOTE: nx has to be equal to or larger than 6
+  subroutine gradient_local_real_1d(f_in, f_out, nx, dx, factor, ix)
+    implicit none
+    integer,intent(in)  :: nx
+    real(8),intent(in)  :: f_in(nx)
+    real(8),intent(out) :: f_out(1)
+    real(8),intent(in)  :: dx, factor
+    integer,intent(in) :: ix
+    real(8) :: dx_i
+    real(8) :: g0,g1,g2,g3,g4
+
+
+    dx_i = factor/dx
+    g0 = gt0*dx_i
+    g1 = gt1*dx_i
+    g2 = gt2*dx_i
+    g3 = gt3*dx_i
+
+    if(ix >= 1+3 .and. ix < nx-3)then
+      f_out(1) = g1*(f_in(ix+1) - f_in(ix-1)) &
+                +g2*(f_in(ix+2) - f_in(ix-2)) &
+                +g3*(f_in(ix+3) - f_in(ix-3))
+    else if(ix ==1)then
+      f_out(1) = g1*(f_in(1+1) ) &
+                +g2*(f_in(1+2) ) &
+                +g3*(f_in(1+3) )
+    else if(ix ==2)then
+      f_out(1) = g1*(f_in(2+1) - f_in(2-1)) &
+                +g2*(f_in(2+2) ) &
+                +g3*(f_in(2+3) )
+    else if(ix ==3)then
+      f_out(1) = g1*(f_in(3+1) - f_in(3-1)) &
+                +g2*(f_in(3+2) - f_in(3-2)) &
+                +g3*(f_in(3+3))
+    else if(ix == nx-2)then
+      f_out(1) = g1*(f_in(nx-2+1) - f_in(nx-2-1)) &
+                +g2*(f_in(nx-2+2) - f_in(nx-2-2)) &
+                +g3*(             - f_in(nx-2-3))
+    else if(ix == nx-1)then
+      f_out(1) = g1*(f_in(nx-1+1) - f_in(nx-1-1)) &
+                +g2*(             - f_in(nx-1-2)) &
+                +g3*(             - f_in(nx-1-3))
+    else if(ix == nx)then
+      f_out(1) = g1*( -f_in(nx-1)) &
+                +g2*( -f_in(nx-2)) &
+                +g3*( -f_in(nx-3))
+    else
+      stop 'Error in gradient_local_real_1d'
+    end if
+
+  end subroutine gradient_local_real_1d
+!-----------------------------------------------------------------------------------------
+! NOTE: nx has to be equal to or larger than 6
+  subroutine gradient_local_complex_1d(zf_in, zf_out, nx, dx, factor, ix)
+    implicit none
+    integer,intent(in)  :: nx
+    complex(8),intent(in)  :: zf_in(nx)
+    complex(8),intent(out) :: zf_out(1)
+    real(8),intent(in)  :: dx, factor
+    integer,intent(in) :: ix
+    real(8) :: dx_i
+    real(8) :: g0,g1,g2,g3,g4
+
+
+    dx_i = factor/dx
+    g0 = gt0*dx_i
+    g1 = gt1*dx_i
+    g2 = gt2*dx_i
+    g3 = gt3*dx_i
+
+    if(ix >= 1+3 .and. ix < nx-3)then
+      zf_out(1) = g1*(zf_in(ix+1) - zf_in(ix-1)) &
+                 +g2*(zf_in(ix+2) - zf_in(ix-2)) &
+                 +g3*(zf_in(ix+3) - zf_in(ix-3))
+    else if(ix ==1)then
+      zf_out(1) = g1*(zf_in(1+1) ) &
+                 +g2*(zf_in(1+2) ) &
+                 +g3*(zf_in(1+3) )
+    else if(ix ==2)then
+      zf_out(1) = g1*(zf_in(2+1) - zf_in(2-1)) &
+                 +g2*(zf_in(2+2) ) &
+                 +g3*(zf_in(2+3) )
+    else if(ix ==3)then
+      zf_out(1) = g1*(zf_in(3+1) - zf_in(3-1)) &
+                 +g2*(zf_in(3+2) - zf_in(3-2)) &
+                 +g3*(zf_in(3+3))
+    else if(ix == nx-2)then
+      zf_out(1) = g1*(zf_in(nx-2+1) - zf_in(nx-2-1)) &
+                 +g2*(zf_in(nx-2+2) - zf_in(nx-2-2)) &
+                 +g3*(             - zf_in(nx-2-3))
+    else if(ix == nx-1)then
+      zf_out(1) = g1*(zf_in(nx-1+1) - zf_in(nx-1-1)) &
+                 +g2*(             - zf_in(nx-1-2)) &
+                 +g3*(             - zf_in(nx-1-3))
+    else if(ix == nx)then
+      zf_out(1) = g1*( -zf_in(nx-1)) &
+                 +g2*( -zf_in(nx-2)) &
+                 +g3*( -zf_in(nx-3))
+    else
+      stop 'Error in gradient_local_real_1d'
+    end if
+
+  end subroutine gradient_local_complex_1d
+
+!-----------------------------------------------------------------------------------------
 
 end module finite_difference_mod
