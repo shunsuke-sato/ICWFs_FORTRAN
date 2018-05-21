@@ -12,6 +12,7 @@ module species
     real(8),allocatable :: x_ini(:)    ! Initial position of particle coordinates
     real(8),allocatable :: x_fin(:)    ! Final position of particle coordinates
     real(8),allocatable :: dx(:)    ! Spacing of grid points
+    real(8),allocatable :: dV       ! Volume element
     real(8),allocatable :: x(:,:)    ! Position of real-space grids
     complex(8),allocatable :: zwfn(:,:)  ! wavefunction
     real(8),allocatable :: r_particle(:,:) ! Position of particle
@@ -55,6 +56,7 @@ module species
 
 
       spec%dx(1:ndim) = (x_fin(1:ndim) - x_ini(1:ndim))/(ngrid(1:ndim)+1)
+      spec%dV = product(spec%dx(1:ndim))
 
 ! Initialize position of grids
       select case(ndim)

@@ -1,6 +1,7 @@
 module global_variables
   use mpi
   use parallel
+  use communication
   use species
   use math_mod
   use interaction_mod

@@ -6,7 +6,8 @@ module communication
   private
 
 
-  public :: comm_bcast
+  public :: comm_bcast, &
+            comm_allreduce
 
   interface comm_bcast
     module procedure comm_bcast_integer

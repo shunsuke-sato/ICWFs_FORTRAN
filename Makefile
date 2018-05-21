@@ -12,6 +12,7 @@ PROG = icwf
 $(PROG):math_mod.o \
         species_mod.o \
         parallel.o \
+        communication.o \
         finite_difference_mod.o \
         random_number_mod.o \
         interaction_mod.o \

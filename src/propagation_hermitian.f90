@@ -1,18 +1,82 @@
 subroutine propagation_hermitian
   use global_variables
   implicit none
-  integer :: itraj, it
+  integer,parameter :: nout_density = 100
+  integer :: iout_density
+  character(256) :: cfile_density
+
+  type species_output
+     real(8),allocatable :: rho(:,:)
+  end type species_output
+  type(species_output) :: spec_t(num_species)
+  
+  integer :: itraj, it, ispec, ip, ix
+  real(8) :: ss
+
+  do ispec = 1, num_species
+    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+1))
+    spec_t(ispec)%rho(:,:)=0d0
+  end do
 
 
-  do itraj = 1, num_trajectory
+
+  Trajectory: do itraj = 1, num_trajectory
     call sampling
     if(mod(itraj-1,comm_nproc_global) /= comm_id_global)cycle
-    do it = 1, num_time_step
+
+    iout_density = 0
+    do ispec = 1,num_species
+      do ip = 1,spec(ispec)%nparticle
+        ss = sum(abs(spec(ispec)%zwfn(:,ip))**2)*spec(ispec)%dV
+        spec_t(ispec)%rho(:,iout_density) = spec_t(ispec)%rho(:,iout_density) &
+          + abs(spec(ispec)%zwfn(:,ip))**2/ss
+      end do
+    end do
+
+    Time_propagation: do it = 1, num_time_step
 
       call dt_evolve_Runge_Kutta4_hermitian
 
+      if( mod(it, max(num_time_step/nout_density,1) )== 0)then
+        iout_density = iout_density + 1
+        do ispec = 1,num_species
+          do ip = 1,spec(ispec)%nparticle
+            ss = sum(abs(spec(ispec)%zwfn(:,ip))**2)*spec(ispec)%dV
+            spec_t(ispec)%rho(:,iout_density) = spec_t(ispec)%rho(:,iout_density) &
+              + abs(spec(ispec)%zwfn(:,ip))**2/ss
+          end do
+        end do
+      end if
+
+    end do Time_propagation
+    
+    iout_density = iout_density + 1
+    do ispec = 1,num_species
+      do ip = 1,spec(ispec)%nparticle
+        ss = sum(abs(spec(ispec)%zwfn(:,ip))**2)*spec(ispec)%dV
+        spec_t(ispec)%rho(:,iout_density) = spec_t(ispec)%rho(:,iout_density) &
+          + abs(spec(ispec)%zwfn(:,ip))**2/ss
+      end do
     end do
+  end do Trajectory
+
+  do ispec = 1,num_species
+    call comm_allreduce(spec_t(ispec)%rho(:,:))
   end do
+
+  if(if_root_global)then
+    do ispec = 1,num_species
+      do it = 0, nout_density+1
+        write(cfile_density,"(I5)")it
+        cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
+        open(21,file=cfile_density)
+        do ix = 1, spec(ispec)%ngrid_tot
+          write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,it)
+        end do
+        close(21)
+      end do
+    end do
+  end if
 
 end subroutine propagation_hermitian
 
