@@ -1,4 +1,5 @@
-FC = mpif90 -O2 ## gfotran
+#FC = mpif90 -O2 ## gfotran
+FC = mpif90 -O0 -fbounds-check ## gfotran
 
 LN = #-llapack -lblas
 

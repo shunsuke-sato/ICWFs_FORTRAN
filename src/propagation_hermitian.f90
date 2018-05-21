@@ -14,13 +14,14 @@ subroutine propagation_hermitian
   real(8) :: ss
 
   do ispec = 1, num_species
-    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+1))
+    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+2))
     spec_t(ispec)%rho(:,:)=0d0
   end do
 
 
 
   Trajectory: do itraj = 1, num_trajectory
+    if(if_root_global)write(*,*)"itraj =",itraj
     call sampling
     if(mod(itraj-1,comm_nproc_global) /= comm_id_global)cycle
 
@@ -62,12 +63,13 @@ subroutine propagation_hermitian
 
   do ispec = 1,num_species
     call comm_allreduce(spec_t(ispec)%rho(:,:))
+    spec_t(ispec)%rho(:,:) = spec_t(ispec)%rho(:,:)/num_trajectory
   end do
 
   if(if_root_global)then
     do ispec = 1,num_species
-      do it = 0, nout_density+1
-        write(cfile_density,"(I5)")it
+      do it = 0, nout_density+2
+        write(cfile_density,"(I5.5)")it
         cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
         open(21,file=cfile_density)
         do ix = 1, spec(ispec)%ngrid_tot
