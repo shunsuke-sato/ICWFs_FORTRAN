@@ -10,7 +10,7 @@ subroutine parameters
   propagation_method = HERMITIAN_LIMIT
   num_trajectory = 40
   time_step = 0.01d0
-  propagation_time = 1d0*fs
+  propagation_time = 20d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters

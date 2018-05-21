@@ -27,7 +27,7 @@ subroutine calc_velocity_from_cond_wf_1d(spec_in,zwfn_in,x_in,v_out)
   real(8) :: t1, t2
   integer :: ix
 
-  ix = aint(x_in-spec_in%x_ini(1))/spec_in%dx(1)
+  ix = aint( (x_in-spec_in%x_ini(1))/spec_in%dx(1) )
   t1 = x_in - (ix*spec_in%dx(1) + spec_in%x_ini(1))
   t1 = t1/spec_in%dx(1)
 
@@ -39,7 +39,7 @@ subroutine calc_velocity_from_cond_wf_1d(spec_in,zwfn_in,x_in,v_out)
     vt1 = 0d0
   end if
 
-  ix = aint(x_in-spec_in%x_ini(1))/spec_in%dx(1) + 1
+  ix = aint( (x_in-spec_in%x_ini(1))/spec_in%dx(1) ) + 1
   t2 = (ix*spec_in%dx(1) + spec_in%x_ini(1)) - x_in
   t2 = t2/spec_in%dx(1)
   if(ix > 0 .and. ix <= spec_in%ngrid(1))then
