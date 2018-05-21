@@ -234,13 +234,13 @@ subroutine dt_evolve_Runge_Kutta4_hermitian
 
 !! Sum
   do ispec = 1, num_species
-    spec(ispec)%zwfn(:,:) = spec_t(ispec)%zwfn(:,:, 0) +time_step/6d0*( &
+    spec(ispec)%zwfn(:,:) = spec(ispec)%zwfn(:,:) + time_step/6d0*( &
             spec_t(ispec)%zwfn(:,:, 1) &
      +2d0 * spec_t(ispec)%zwfn(:,:, 2) &
      +2d0 * spec_t(ispec)%zwfn(:,:, 3) &
           + spec_t(ispec)%zwfn(:,:, 4) )
 
-    spec(ispec)%r_particle(:,:) = spec_t(ispec)%r_p(:,:,0) +time_step/6d0*( &
+    spec(ispec)%r_particle(:,:) = spec(ispec)%r_particle(:,:) + time_step/6d0*( &
             spec_t(ispec)%r_p(:,:,1) &
      +2d0 * spec_t(ispec)%r_p(:,:,2) &
      +2d0 * spec_t(ispec)%r_p(:,:,3) &
