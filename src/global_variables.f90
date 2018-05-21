@@ -30,7 +30,8 @@ module global_variables
   real(8) :: time_step, propagation_time
   integer :: num_time_step
 
-  integer,parameter :: HERMITIAN_LIMIT = 1
+  integer,parameter :: NO_PROPAGATION  = -1
+  integer,parameter :: HERMITIAN_LIMIT =  1
 
 
 ! temporal

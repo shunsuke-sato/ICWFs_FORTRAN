@@ -6,10 +6,11 @@ subroutine parameters
   call write_message('Start: parameters')
 
 ! propagation parameters
+!  propagation_method = NO_PROPAGATION
   propagation_method = HERMITIAN_LIMIT
-  num_trajectory = 100
-  time_step = 0.1d0
-  propagation_time = 10d0
+  num_trajectory = 40
+  time_step = 0.01d0
+  propagation_time = 1d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters
@@ -51,12 +52,12 @@ subroutine shin_metiu_parameters
   sampling_method = sampling_from_manybody_wf
 
 ! Parameters for Shin-Metiu model
-  lsize_elec = 200d0
-  nx_elec = 2000
+  lsize_elec = 60d0
+  nx_elec = 180
   mass_elec = 1d0
 
   lsize_ion  = 18d0
-  nx_ion  = 150
+  nx_ion  = 90
   mass_ion = 1836d0
 
 

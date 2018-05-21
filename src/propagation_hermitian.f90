@@ -4,6 +4,8 @@ subroutine propagation_hermitian
   integer,parameter :: nout_density = 100
   integer :: iout_density
   character(256) :: cfile_density
+  logical,parameter :: if_write_traj = .true.
+  character(256) :: cfile_traj
 
   type species_output
      real(8),allocatable :: rho(:,:)
@@ -14,7 +16,7 @@ subroutine propagation_hermitian
   real(8) :: ss
 
   do ispec = 1, num_species
-    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+2))
+    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+10))
     spec_t(ispec)%rho(:,:)=0d0
   end do
 
@@ -24,6 +26,14 @@ subroutine propagation_hermitian
     if(if_root_global)write(*,*)"itraj =",itraj
     call sampling
     if(mod(itraj-1,comm_nproc_global) /= comm_id_global)cycle
+
+    if(if_write_traj)then
+      write(cfile_traj,"(I7.7)")itraj
+      cfile_traj = trim(cfile_traj)//"_trajectory.out"
+      open(31,file=cfile_traj)
+    end if
+    write(31,"(999e26.16e3)")0d0,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
+
 
     iout_density = 0
     do ispec = 1,num_species
@@ -49,6 +59,7 @@ subroutine propagation_hermitian
         end do
       end if
 
+    write(31,"(999e26.16e3)")time_step*it,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
     end do Time_propagation
     
     iout_density = iout_density + 1
@@ -59,6 +70,11 @@ subroutine propagation_hermitian
           + abs(spec(ispec)%zwfn(:,ip))**2/ss
       end do
     end do
+
+    if(if_write_traj)then
+      close(31)
+    end if
+
   end do Trajectory
 
   do ispec = 1,num_species
@@ -119,7 +135,7 @@ subroutine dt_evolve_Runge_Kutta4_hermitian
                      spec_t(ispec)%zwfn(:,ip,irk), &
                      spec(ispec)%ngrid,          &
                      spec(ispec)%dx,             &
-                     -0.5d0)
+                     -0.5d0/spec(ispec)%mass)
       spec_t(ispec)%zwfn(:,ip,irk) = -zI*(&
           spec_t(ispec)%zwfn(:,ip,irk) &
         + spec_t(ispec)%veff(:,ip)*spec_t(ispec)%zwfn(:,ip,0) )
@@ -147,7 +163,7 @@ subroutine dt_evolve_Runge_Kutta4_hermitian
                      spec_t(ispec)%zwfn(:,ip,irk), &
                      spec(ispec)%ngrid,          &
                      spec(ispec)%dx,             &
-                     -0.5d0)
+                     -0.5d0/spec(ispec)%mass)
       spec_t(ispec)%zwfn(:,ip,irk) = -zI*(&
           spec_t(ispec)%zwfn(:,ip,irk) &
         + spec_t(ispec)%veff(:,ip)*spec_t(ispec)%zwfn(:,ip,0) )
@@ -176,7 +192,7 @@ subroutine dt_evolve_Runge_Kutta4_hermitian
                      spec_t(ispec)%zwfn(:,ip,irk), &
                      spec(ispec)%ngrid,          &
                      spec(ispec)%dx,             &
-                     -0.5d0)
+                     -0.5d0/spec(ispec)%mass)
       spec_t(ispec)%zwfn(:,ip,irk) = -zI*(&
           spec_t(ispec)%zwfn(:,ip,irk) &
         + spec_t(ispec)%veff(:,ip)*spec_t(ispec)%zwfn(:,ip,0) )
@@ -206,7 +222,7 @@ subroutine dt_evolve_Runge_Kutta4_hermitian
                      spec_t(ispec)%zwfn(:,ip,irk), &
                      spec(ispec)%ngrid,          &
                      spec(ispec)%dx,             &
-                     -0.5d0)
+                     -0.5d0/spec(ispec)%mass)
       spec_t(ispec)%zwfn(:,ip,irk) = -zI*(&
           spec_t(ispec)%zwfn(:,ip,irk) &
         + spec_t(ispec)%veff(:,ip)*spec_t(ispec)%zwfn(:,ip,0) )
