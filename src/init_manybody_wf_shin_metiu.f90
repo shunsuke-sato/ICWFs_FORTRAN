@@ -150,7 +150,7 @@ subroutine init_manybody_wf_shin_metiu
   do ix_i = 1, spec(2)%ngrid(1)
     xi = spec(2)%x_ini(1) + spec(2)%dx(1)*ix_i
       
-    zwfn_ini_2p(:,ix_i) = zwfn_ini_2p(:,ix_i)*exp(-0.5d0*((xi(1)-Rion)/sigma)**2)
+    zwfn_ini_2p(:,ix_i) = zwfn_ini_2p(:,ix_i)*exp(-1d0*((xi(1)-Rion)/sigma)**2)
 
   end do
 
