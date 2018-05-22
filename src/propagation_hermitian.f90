@@ -88,6 +88,7 @@ subroutine propagation_hermitian
         write(cfile_density,"(I5.5)")it
         cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
         open(21,file=cfile_density)
+        write(21,"(A,2x,e16.6e3)")"#time=",time_step*it
         do ix = 1, spec(ispec)%ngrid_tot
           write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,it)
         end do

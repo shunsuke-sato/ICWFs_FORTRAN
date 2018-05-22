@@ -8,9 +8,9 @@ subroutine parameters
 ! propagation parameters
 !  propagation_method = NO_PROPAGATION
   propagation_method = HERMITIAN_LIMIT
-  num_trajectory = 40
+  num_trajectory = 10
   time_step = 0.01d0
-  propagation_time = 20d0*fs
+  propagation_time = 40d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters
@@ -57,7 +57,7 @@ subroutine shin_metiu_parameters
   mass_elec = 1d0
 
   lsize_ion  = 18d0
-  nx_ion  = 90
+  nx_ion  = 150
   mass_ion = 1836d0
 
 
