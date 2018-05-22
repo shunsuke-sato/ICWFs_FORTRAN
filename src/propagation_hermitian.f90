@@ -84,15 +84,19 @@ subroutine propagation_hermitian
 
   if(if_root_global)then
     do ispec = 1,num_species
-      do it = 0, nout_density+2
-        write(cfile_density,"(I5.5)")it
-        cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
-        open(21,file=cfile_density)
-        write(21,"(A,2x,e16.6e3)")"#time=",time_step*it
-        do ix = 1, spec(ispec)%ngrid_tot
-          write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,it)
-        end do
-        close(21)
+      iout_density = -1 
+      do it = 0, num_time_step+1
+        if( mod(it, max(num_time_step/nout_density,1))== 0 .or. it == num_time_step+1)then
+          iout_density = iout_density + 1
+          write(cfile_density,"(I5.5)")iout_density
+          cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
+          open(21,file=cfile_density)
+          write(21,"(A,2x,e16.6e3)")"#time=",time_step*it
+          do ix = 1, spec(ispec)%ngrid_tot
+            write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,iout_density)
+          end do
+          close(21)
+        end if
       end do
     end do
   end if
