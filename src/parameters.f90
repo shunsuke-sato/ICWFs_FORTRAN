@@ -10,11 +10,12 @@ subroutine parameters
   propagation_method = HERMITIAN_LIMIT
   num_trajectory = 10
   time_step = 0.01d0
-  propagation_time = 40d0*fs
+  propagation_time = 400d0 !40d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters
-  call shin_metiu_parameters
+!  call shin_metiu_parameters
+  call ee_scattering_parameters
 
 
   num_total_particle = sum(spec(:)%nparticle)
@@ -68,6 +69,30 @@ subroutine shin_metiu_parameters
 
   call init_species(spec(1),1 ,1 , mass_elec, nx_elec, -0.5d0*lsize_elec, 0.5*lsize_elec, "electron")
   call init_species(spec(2),1 ,1 , mass_ion,  nx_ion , -0.5d0*lsize_ion , 0.5*lsize_ion,  "ion")
+
+
+end subroutine shin_metiu_parameters
+
+subroutine ee_scattering_parameters
+  use global_variables
+  implicit none
+  real(8) :: lsize_elec(1)
+  integer :: nx_elec(1)
+  real(8) :: mass_elec
+
+
+  sampling_method = sampling_from_manybody_wf
+
+! Parameters for Shin-Metiu model
+  lsize_elec = 400d0
+  nx_elec = 2000
+  mass_elec = 1d0
+
+  num_species = 1
+  allocate(spec(1:num_species))
+! the first species  is electron
+
+  call init_species(spec(1),1 ,2 , mass_elec, nx_elec, -0.5d0*lsize_elec, 0.5*lsize_elec, "electron")
 
 
 end subroutine shin_metiu_parameters
