@@ -16,6 +16,7 @@ end subroutine sampling
 subroutine sampling_from_manybody_wavefunction
   use global_variables
   implicit none
+  real(8) :: rvec(3) ! maximum 12 particles
   real(8) :: r1
   integer :: ix1, ix2, ix
   integer :: nx1, nx2
@@ -50,16 +51,19 @@ subroutine sampling_from_manybody_wavefunction
     ip = 0
     do ispec = 1, num_species
       do ipt = 1, spec(ispec)%nparticle
+        call random_double(rvec); rvec = rvec -0.5d0
         ip = ip + 1
         select case(ip)
         case(1)
           spec(ispec)%r_particle(:,ipt) = spec(ispec)%x_ini(:) &
-          + spec(ispec)%dx(:)*ix1
+          + spec(ispec)%dx(:)*ix1 &
+          + spec(ispec)%dx(:)*rvec(1:spec(ispec)%ndim)
           
           spec(ispec)%zwfn(1:nx1,ipt) = zwfn_ini_2p(1:nx1,ix2)
         case(2)
           spec(ispec)%r_particle(:,ipt) = spec(ispec)%x_ini(:) &
-          + spec(ispec)%dx(:)*ix2
+          + spec(ispec)%dx(:)*ix2 &
+          + spec(ispec)%dx(:)*rvec(1:spec(ispec)%ndim)
           
           spec(ispec)%zwfn(1:nx2,ipt) = zwfn_ini_2p(ix1,1:nx2)
         case default 
