@@ -67,7 +67,7 @@ contains
 !    pot = 0d0
 
 ! electron-electron iteraction for electron scattering problem
-    pot = 1d0/sqrt(2d0+(x1(1)-x2(2))**2)
+    pot = 1d0/sqrt(2d0+(x1(1)-x2(1))**2)
 
   end function two_body_pot_1
 

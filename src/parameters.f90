@@ -95,4 +95,4 @@ subroutine ee_scattering_parameters
   call init_species(spec(1),1 ,2 , mass_elec, nx_elec, -0.5d0*lsize_elec, 0.5*lsize_elec, "electron")
 
 
-end subroutine shin_metiu_parameters
+end subroutine ee_scattering_parameters
