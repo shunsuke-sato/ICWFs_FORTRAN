@@ -1,6 +1,9 @@
 subroutine init_manybody_wf_ee_scattering
   use global_variables
   implicit none
+  real(8),parameter :: x0  = -100d0
+  real(8),parameter :: sigma = 15d0
+  real(8),parameter :: k_mom = sqrt(2d0*0.6d0)
   integer,parameter :: ncg = 100
   real(8),parameter :: res_epsilon = 1d-8
   real(8),allocatable :: veff(:)
@@ -11,7 +14,7 @@ subroutine init_manybody_wf_ee_scattering
   integer :: icg
   real(8) :: dx
   integer :: ix,iy,nx
-  real(8) :: tmp
+  real(8) :: tmp, yy
   complex(8) :: ztmp
 
   nx = spec(1)%ngrid(1)
@@ -89,7 +92,7 @@ subroutine init_manybody_wf_ee_scattering
   do ix = 1, spec(1)%ngrid(1)
     xx = spec(1)%x(1,ix)
     do iy = 1, spec(1)%ngrid(1)
-      yy = spec(1)%x(2,iy)
+      yy = spec(1)%x(1,iy)
       ztmp = exp(-0.5d0*((xx-x0)/sigma)**2)*exp(zI*k_mom*xx)*xvec(iy)
       ztmp = ztmp + exp(-0.5d0*((yy-x0)/sigma)**2)*exp(zI*k_mom*yy)*xvec(ix)
       zwfn_ini_2p(ix,iy) = ztmp
