@@ -4,7 +4,7 @@ subroutine propagation_hermitian
   integer,parameter :: nout_density = 100
   integer :: iout_density
   character(256) :: cfile_density
-  logical,parameter :: if_write_traj = .true.
+  logical,parameter :: if_write_traj = .false.
   character(256) :: cfile_traj
 
   type species_output
@@ -31,8 +31,9 @@ subroutine propagation_hermitian
       write(cfile_traj,"(I7.7)")itraj
       cfile_traj = trim(cfile_traj)//"_trajectory.out"
       open(31,file=cfile_traj)
+      write(31,"(999e26.16e3)")0d0,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
     end if
-    write(31,"(999e26.16e3)")0d0,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
+
 
 
     iout_density = 0
@@ -59,7 +60,7 @@ subroutine propagation_hermitian
         end do
       end if
 
-    write(31,"(999e26.16e3)")time_step*it,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
+      if(if_write_traj) write(31,"(999e26.16e3)")time_step*it,spec(1)%r_particle(:,:),spec(2)%r_particle(:,:)
     end do Time_propagation
     
     iout_density = iout_density + 1
