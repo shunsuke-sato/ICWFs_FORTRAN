@@ -1,7 +1,8 @@
 subroutine propagation_hermitian
   use global_variables
   implicit none
-  integer,parameter :: nout_density = 100
+  integer,parameter :: nstep_density_out = 200
+  integer :: num_density_out
   integer :: iout_density
   character(256) :: cfile_density
   logical,parameter :: if_write_traj = .false.
@@ -15,8 +16,10 @@ subroutine propagation_hermitian
   integer :: itraj, it, ispec, ip, ix
   real(8) :: ss
 
+  num_density_out = num_time_step/nstep_density_out
+
   do ispec = 1, num_species
-    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:nout_density+10))
+    allocate(spec_t(ispec)%rho(spec(ispec)%ngrid_tot,0:num_density_out+1))
     spec_t(ispec)%rho(:,:)=0d0
   end do
 
@@ -49,7 +52,7 @@ subroutine propagation_hermitian
 
       call dt_evolve_Runge_Kutta4_hermitian
 
-      if( mod(it, max(num_time_step/nout_density,1) )== 0)then
+      if( mod(it, nstep_density_out) == 0)then
         iout_density = iout_density + 1
         do ispec = 1,num_species
           do ip = 1,spec(ispec)%nparticle
@@ -85,19 +88,19 @@ subroutine propagation_hermitian
 
   if(if_root_global)then
     do ispec = 1,num_species
-      iout_density = -1 
-      do it = 0, num_time_step+1
-        if( mod(it, max(num_time_step/nout_density,1))== 0 .or. it == num_time_step+1)then
-          iout_density = iout_density + 1
-          write(cfile_density,"(I5.5)")iout_density
-          cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
-          open(21,file=cfile_density)
-          write(21,"(A,2x,e16.6e3)")"#time=",time_step*it
-          do ix = 1, spec(ispec)%ngrid_tot
-            write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,iout_density)
-          end do
-          close(21)
+      do iout_density = 0, num_density_out+1
+        write(cfile_density,"(I5.5)")iout_density
+        cfile_density=trim(cfile_density)//"_"//trim(spec(ispec)%name)//"_rho.out"
+        open(21,file=cfile_density)
+        if(iout_density == num_density_out+1)then
+          write(21,"(A,2x,e16.6e3)")"#time=",time_step*num_time_step
+        else
+          write(21,"(A,2x,e16.6e3)")"#time=",time_step*nstep_density_out*iout_density
         end if
+        do ix = 1, spec(ispec)%ngrid_tot
+          write(21,"(4e16.6e3)")spec(ispec)%x(:,ix),spec_t(ispec)%rho(ix,iout_density)
+        end do
+        close(21)
       end do
     end do
   end if
