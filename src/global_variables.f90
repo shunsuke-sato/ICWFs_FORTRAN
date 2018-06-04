@@ -32,6 +32,7 @@ module global_variables
 
   integer,parameter :: NO_PROPAGATION  = -1
   integer,parameter :: HERMITIAN_LIMIT =  1
+  integer,parameter :: INT_CWF         =  2
 
 
 ! temporal
