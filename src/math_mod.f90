@@ -93,23 +93,18 @@ contains
     real(8) :: tolerance
     integer :: i,j
 
-    write(*,*)'ok00'
     m = size(a_in,1)
     n = size(a_in,2)
     lwork = 10*max(1,2*min(m,n)+max(m,n))
 
-    write(*,*)'ok01'
     allocate(a(m,n), s(min(m,n)),u(m,m), vt(n,n))
     allocate(at(n,m), ut(m,m), v(n,n))
     allocate(work(lwork), rwork(5*min(m,n)))
 
-    write(*,*)'ok02'
     a = a_in
 
-    write(*,*)'ok03',m,n
     call zgesvd ('A', 'A', m, n, a, m, s, u, m, vt, n, work, lwork, rwork, info)
 
-    write(*,*)'ok04'
     tolerance = max(1d-16*max(m,n)*maxval(s), 0d0 )
     do i = 1, min(m,n)
       if(s(i)>tolerance)then
@@ -119,7 +114,6 @@ contains
       end if
     end do
 
-    write(*,*)'ok05'
     at = 0d0
     ut = transpose(conjg(u))
     v  = transpose(conjg(vt))
@@ -130,7 +124,6 @@ contains
       end do
     end do
 
-    write(*,*)'ok06'
     a_pinv = matmul(v,at)
 
   end subroutine pseudo_inverse_complex8
