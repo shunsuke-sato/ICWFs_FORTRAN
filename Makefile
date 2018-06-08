@@ -1,7 +1,7 @@
 FC = mpif90 -O2 ## gfotran
 #FC = mpif90 -O0 -fbounds-check ## gfotran
 
-LN = #-llapack -lblas
+LN = -llapack -lblas
 
 VPATH = src:object
 SRC = $(shell cd src ;ls *.f90 ;cd ..)
