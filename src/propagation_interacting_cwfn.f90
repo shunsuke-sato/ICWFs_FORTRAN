@@ -3,6 +3,8 @@ subroutine propagation_interacting_cwfn
   implicit none
   integer :: ntraj_start, ntraj_end
 
+  complex(8),allocatable :: zC_icwf(:)
+
   type species_icwf
      complex(8),allocatable :: zwfn(:,:)  ! wavefunction
     real(8),allocatable :: r_p(:,:) ! Position of particle
@@ -19,7 +21,7 @@ subroutine propagation_interacting_cwfn
 
   call initialize_icwfn_propagation
   call sampling_icwfn
-
+  call initialize_icwfn_coefficient
 
 
 contains
@@ -74,6 +76,15 @@ contains
     
   end subroutine sampling_icwfn
   
-  
+
+!-----------------------------------------------------------------------------------------
+  subroutine initialize_icwfn_coefficient
+    implicit none
+
+    allocate(zC_icwf(num_trajectory))
+
+    
+
+  end subroutine initialize_icwfn_coefficient
 end subroutine propagation_interacting_cwfn
 
