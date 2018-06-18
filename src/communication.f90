@@ -44,6 +44,14 @@ module communication
     module procedure comm_allreduce_complex8_3d
  end interface comm_allreduce
 
+ interface comm_sendrecv
+    module procedure comm_sendrecv_integer
+    module procedure comm_sendrecv_integer_1d
+    module procedure comm_sendrecv_complex8
+    module procedure comm_sendrecv_complex8_1d
+    module procedure comm_sendrecv_complex8_2d
+ end interface comm_sendrecv
+
 contains
 !-------------------------------------------------------------------------------
   function int_switch(if_true, int_true, int_false) result(int_result)
@@ -61,6 +69,8 @@ contains
 !-------------------------------------------------------------------------------
   include "include/comm_bcast.f90"
   include "include/comm_allreduce.f90"
+  include "include/comm_sendrecv.f90"
+
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
