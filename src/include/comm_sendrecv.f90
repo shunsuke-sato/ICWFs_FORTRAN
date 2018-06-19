@@ -9,7 +9,8 @@ subroutine comm_sendrecv_integer(sbuf, dest, stag, rbuf, source, rtag, communica
   integer,intent(in) :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
   integer :: stype
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
@@ -30,8 +31,8 @@ subroutine comm_sendrecv_integer_1d(sbuf, dest, stag, rbuf, source, rtag, commun
   integer,intent(in) :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
-  integer :: stype
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
 
@@ -51,8 +52,8 @@ subroutine comm_sendrecv_complex8(sbuf, dest, stag, rbuf, source, rtag, communic
   integer,intent(in)    :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
-  integer :: stype
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
 
@@ -72,8 +73,8 @@ subroutine comm_sendrecv_complex8_1d(sbuf, dest, stag, rbuf, source, rtag, commu
   integer,intent(in)    :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
-  integer :: stype
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
 
@@ -94,11 +95,10 @@ subroutine comm_sendrecv_complex8_2d(sbuf, dest, stag, rbuf, source, rtag, commu
   integer,intent(in)    :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
-  integer :: stype
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
-
 
   call mpi_sendrecv(sbuf, size(sbuf), MPI_DOUBLE_COMPLEX, dest, stag, &
                     rbuf, size(rbuf), MPI_DOUBLE_COMPLEX, source, rtag, id_comm, &
@@ -116,8 +116,8 @@ subroutine comm_sendrecv_complex8_3d(sbuf, dest, stag, rbuf, source, rtag, commu
   integer,intent(in)    :: rtag
   integer,intent(in),optional :: communicator
   integer :: id_comm
-  integer :: status, ierr
-  integer :: stype
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr
 
   id_comm = int_switch(present(communicator), communicator, comm_group_global)
 
