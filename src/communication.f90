@@ -7,7 +7,8 @@ module communication
 
 
   public :: comm_bcast, &
-            comm_allreduce
+            comm_allreduce, &
+            comm_sendrecv
 
   interface comm_bcast
     module procedure comm_bcast_integer
@@ -50,6 +51,7 @@ module communication
     module procedure comm_sendrecv_complex8
     module procedure comm_sendrecv_complex8_1d
     module procedure comm_sendrecv_complex8_2d
+    module procedure comm_sendrecv_complex8_3d
  end interface comm_sendrecv
 
 contains
