@@ -82,12 +82,70 @@ contains
 !-----------------------------------------------------------------------------------------
   subroutine initialize_icwfn_coefficient
     implicit none
+    complex(8),allocatable :: zbvec(:)
+    complex(8),allocatable :: zMm_pinv(:,:)
+    integer,allocatable :: ispec_p(:),ip_p(:)
+    integer :: ix1, ix2
+    integer :: itraj
+    complex(8) :: ztmp
 
     allocate(zC_icwf(num_trajectory))
     allocate(zMm_icwf(num_trajectory, num_trajectory))
     allocate(zWm_icwf(num_trajectory, num_trajectory))
 
+    allocate(zMm_pinv(num_trajectory,num_trajectory))
+
+   
+    allocate(zbvec(num_trajectory))
+    zbvec = 0d0
+    
+    select case(sampling_method)
+    case(sampling_from_manybody_wf)
+      select case(num_total_particle)
+      case(2)
+
+        allocate(ispec_p(2), ip_p(2))
+        ispec_p(1) = itable_particle2species(1)
+        ispec_p(2) = itable_particle2species(2)
+        ip_p(1)    = itable_particle2particle(1)
+        ip_p(2)    = itable_particle2particle(2)
+
+        do itraj = ntraj_start, ntraj_end
+
+          ztmp = 0d0
+          do ix1 =1 , spec(ispec_p(1))%ngrid_tot
+            do ix2 =1 , spec(ispec_p(2))%ngrid_tot
+              ztmp = ztmp + conjg(&
+                traj(itraj)%spec(ispec_p(1))%zwfn(ix1,ip_p(1)) &
+               *traj(itraj)%spec(ispec_p(2))%zwfn(ix2,ip_p(2)) &
+                )*zwfn_ini_2p(ix1,ix2)
+            end do
+          end do
+          ztmp = ztmp * spec(ispec_p(1))%dV* spec(ispec_p(2))%dV
+
+          zbvec(itraj) = ztmp
+
+        end do
+
+      case default
+        write(message(2),"(I7)")num_total_particle
+        message(1) = 'Fatal Error: sampling_from_manybody_wavefunction is not implemented for'
+        message(2) = '           : num_total_particle = '//trim(message(2))
+        call error_finalize(message(1:2))
+      end select
+    case default
+      write(message(1),"(I7)")sampling_method
+      message(1) = 'Fatal Error: sampling_method = '//trim(message(1))//'  is invalid.'
+      call error_finalize(message(1))
+    end select
+
+    call comm_allreduce(zbvec)
+
     call calc_icwf_matrix(if_overlap_matrix=.true., if_interaction_matrix=.false.)
+    call pseudo_inverse(zMm_icwf,zMm_pinv)
+
+    zC_icwf(:) = matmul(zMm_pinv, zbvec)
+    
 
   end subroutine initialize_icwfn_coefficient
 

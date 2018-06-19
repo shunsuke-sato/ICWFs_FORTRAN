@@ -27,13 +27,15 @@ subroutine parameters
 
 ! table to convert from particle index to species index
   allocate(itable_particle2species(num_total_particle))
+  allocate(itable_particle2particle(num_total_particle))
   
   ip = 0
   do ispec = 1, num_species
     do ipt = 1, spec(ispec)%nparticle
       ip = ip + 1
-      itable_particle2species(ip) = ispec
-      
+      itable_particle2species(ip)  = ispec
+      itable_particle2particle(ip) = ipt
+
     end do
   end do
 

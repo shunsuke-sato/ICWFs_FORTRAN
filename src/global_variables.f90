@@ -19,6 +19,7 @@ module global_variables
 
   integer :: num_total_particle
   integer,allocatable :: itable_particle2species(:)
+  integer,allocatable :: itable_particle2particle(:)
 
   integer :: sampling_method
   integer,parameter :: sampling_from_manybody_wf = 0
