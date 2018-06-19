@@ -4,6 +4,7 @@ subroutine parameters
   integer :: ispec, ip, ipt
 
   call write_message('Start: parameters')
+  call comm_barrier
 
 ! propagation parameters
 !  propagation_method = NO_PROPAGATION
@@ -37,9 +38,8 @@ subroutine parameters
   end do
 
 
-
+  call comm_barrier
   call write_message(message(1))
-
   call write_message('Finish: parameters')
 
 end subroutine parameters

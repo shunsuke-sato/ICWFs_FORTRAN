@@ -8,7 +8,8 @@ module communication
 
   public :: comm_bcast, &
             comm_allreduce, &
-            comm_sendrecv
+            comm_sendrecv, &
+            comm_barrier
 
   interface comm_bcast
     module procedure comm_bcast_integer
@@ -69,6 +70,16 @@ contains
    end if
   end function int_switch
 !-------------------------------------------------------------------------------
+
+  subroutine comm_barrier(communicator)
+    integer,intent(in),optional :: communicator
+    integer :: id_comm, ierr
+    id_comm = int_switch(present(communicator), communicator, comm_group_global)
+
+    call mpi_barrier(id_comm, ierr)
+
+  end subroutine comm_barrier
+  
   include "include/comm_bcast.f90"
   include "include/comm_allreduce.f90"
   include "include/comm_sendrecv.f90"
