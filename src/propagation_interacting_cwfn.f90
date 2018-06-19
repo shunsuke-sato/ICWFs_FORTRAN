@@ -33,7 +33,7 @@ contains
     integer :: itraj, ispec
     
     ntraj_ave = num_trajectory/comm_nproc_global
-    ntraj_start= mod(num_trajectory,comm_nproc_global)
+    ntraj_remainder= mod(num_trajectory,comm_nproc_global)
     if(comm_id_global+1 <= ntraj_remainder)then
       ntraj_start = 1 + comm_id_global*(ntraj_ave+1)
       ntraj_end= ntraj_start + (ntraj_ave+1) -1
@@ -120,6 +120,7 @@ contains
     if(mod(num_trajectory,comm_nproc_global) /= 0)ntraj_size = ntraj_size + 1
     do ispec = 1, num_species
       allocate(spec_buf(ispec)%zwfn_sbuf(spec(ispec)%ngrid_tot,spec(ispec)%nparticle,ntraj_size))
+      allocate(spec_buf(ispec)%zwfn_rbuf(spec(ispec)%ngrid_tot,spec(ispec)%nparticle,ntraj_size))
     end do
 
 

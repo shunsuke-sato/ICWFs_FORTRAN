@@ -7,7 +7,9 @@ subroutine parameters
 
 ! propagation parameters
 !  propagation_method = NO_PROPAGATION
-  propagation_method = HERMITIAN_LIMIT
+!  propagation_method = HERMITIAN_LIMIT
+  propagation_method = INT_CWF
+
   num_trajectory = 4
   time_step = 0.01d0
   propagation_time = 200d0 !40d0*fs
