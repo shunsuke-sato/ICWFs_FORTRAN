@@ -4,10 +4,12 @@ subroutine propagation_interacting_cwfn
   integer :: ntraj_start, ntraj_end
 
   complex(8),allocatable :: zC_icwf(:)
+  complex(8),allocatable :: zMm_icwf(:,:)
+  complex(8),allocatable :: zWm_icwf(:,:)
 
   type species_icwf
      complex(8),allocatable :: zwfn(:,:)  ! wavefunction
-    real(8),allocatable :: r_p(:,:) ! Position of particle
+     real(8),allocatable :: r_p(:,:) ! Position of particle
   end type species_icwf
 
 
@@ -82,9 +84,99 @@ contains
     implicit none
 
     allocate(zC_icwf(num_trajectory))
+    allocate(zMm_icwf(num_trajectory, num_trajectory))
+    allocate(zWm_icwf(num_trajectory, num_trajectory))
 
-    
+    call calc_icwf_matrix(if_overlap_matrix=.true., if_interaction_matrix=.false.)
 
   end subroutine initialize_icwfn_coefficient
+
+  subroutine calc_icwf_matrix(if_overlap_matrix, if_interaction_matrix)
+    implicit none
+    logical,intent(in),optional :: if_overlap_matrix
+    logical,intent(in),optional :: if_interaction_matrix
+    logical :: if_overlap_matrix_t, if_interaction_matrix_t
+    integer :: icycle, ispec, ip, itraj, jtraj
+    integer :: dest, source
+    type species_buffer
+       complex(8),allocatable :: zwfn_sbuf(:,:,:) ! send buffer
+       complex(8),allocatable :: zwfn_rbuf(:,:,:) ! recieve buffer
+    end type species_buffer
+    type(species_buffer),allocatable :: spec_buf(:)
+    integer :: ntraj_size
+    integer :: ntraj_s_sbuf, ntraj_e_sbuf
+    integer :: ntraj_s_rbuf, ntraj_e_rbuf
+    complex(8) :: ztmp
+
+    if_overlap_matrix_t      = .true.
+    if(present(if_overlap_matrix))     if_overlap_matrix_t = if_overlap_matrix
+
+    if_interaction_matrix_t  = .true.
+    if(present(if_interaction_matrix)) if_interaction_matrix_t = if_interaction_matrix
+
+
+    allocate(spec_buf(num_species))
+    ntraj_size = num_trajectory/comm_nproc_global
+    if(mod(num_trajectory,comm_nproc_global) /= 0)ntraj_size = ntraj_size + 1
+    do ispec = 1, num_species
+      allocate(spec_buf(ispec)%zwfn_sbuf(spec(ispec)%ngrid_tot,spec(ispec)%nparticle,ntraj_size))
+    end do
+
+
+    do icycle = 0,comm_nproc_global-1
+      if(icycle == 0)then
+        ntraj_s_rbuf = ntraj_start
+        ntraj_e_rbuf = ntraj_end
+        do itraj = ntraj_start, ntraj_end
+          do ispec = 1, num_species
+            spec_buf(ispec)%zwfn_rbuf(:,:,itraj-ntraj_start+1) &
+              = traj(itraj)%spec(ispec)%zwfn(:,:)
+          end do
+        end do
+
+      else
+
+        ntraj_s_sbuf = ntraj_s_rbuf
+        ntraj_e_sbuf = ntraj_e_rbuf
+        dest   = mod(comm_id_global+icycle,                     comm_nproc_global)
+        source = mod(comm_id_global-icycle + comm_nproc_global, comm_nproc_global)
+        call comm_sendrecv(ntraj_s_sbuf, dest, 1, ntraj_s_rbuf, source, 1)
+        call comm_sendrecv(ntraj_e_sbuf, dest, 1, ntraj_e_rbuf, source, 1)
+
+        do ispec = 1, num_species
+          spec_buf(ispec)%zwfn_sbuf(:,:,1:ntraj_size) &
+            = spec_buf(ispec)%zwfn_rbuf(:,:,1:ntraj_size)
+          call comm_sendrecv(spec_buf(ispec)%zwfn_sbuf, dest,   1, &
+                             spec_buf(ispec)%zwfn_rbuf, source, 1)
+        end do
+
+      end if
+
+      if(if_overlap_matrix_t)then
+        do itraj = ntraj_start, ntraj_end
+          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+
+            ztmp = 1d0
+            do ispec = 1, num_species
+              do ip = 1, spec(ispec)%nparticle
+                ztmp = ztmp * sum(conjg(traj(itraj)%spec(ispec)%zwfn(:,ip)) &
+                  *spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1)) &
+                  *spec(ispec)%dV
+              end do
+            end do
+            zMm_icwf(itraj,jtraj) =       ztmp
+            zMm_icwf(jtraj,itraj) = conjg(ztmp)
+
+          end do
+        end do
+      end if
+      
+    end do
+
+    if(if_overlap_matrix_t)call comm_bcast(zMm_icwf)
+
+
+
+  end subroutine calc_icwf_matrix
 end subroutine propagation_interacting_cwfn
 
