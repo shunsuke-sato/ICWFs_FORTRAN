@@ -5,6 +5,7 @@ subroutine operators
   integer :: ispec,i
 
   call write_message('Start: operators')
+  call comm_barrier
 
 ! Initialize one-body potential
 
@@ -22,7 +23,7 @@ subroutine operators
   end do
 
 
-
+  call comm_barrier
   call write_message('Finish: operators')
 
 end subroutine operators
