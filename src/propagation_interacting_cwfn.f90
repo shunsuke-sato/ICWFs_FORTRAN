@@ -5,6 +5,7 @@ subroutine propagation_interacting_cwfn
 
   complex(8),allocatable :: zC_icwf(:)
   complex(8),allocatable :: zMm_icwf(:,:)
+  complex(8),allocatable :: zMm_sub_icwf(:,:,:)
   complex(8),allocatable :: zWm_icwf(:,:)
 
   type species_icwf
@@ -91,6 +92,7 @@ contains
 
     allocate(zC_icwf(num_trajectory))
     allocate(zMm_icwf(num_trajectory, num_trajectory))
+    allocate(zMm_sub_icwf(num_trajectory, num_trajectory, num_total_particle))
     allocate(zWm_icwf(num_trajectory, num_trajectory))
 
     allocate(zMm_pinv(num_trajectory,num_trajectory))
@@ -149,12 +151,17 @@ contains
 
   end subroutine initialize_icwfn_coefficient
 
-  subroutine calc_icwf_matrix(if_overlap_matrix, if_interaction_matrix)
+  subroutine calc_icwf_matrix(if_overlap_matrix, &
+                              if_interaction_matrix, &
+                              if_density)
     implicit none
     logical,intent(in),optional :: if_overlap_matrix
     logical,intent(in),optional :: if_interaction_matrix
-    logical :: if_overlap_matrix_t, if_interaction_matrix_t
-    integer :: icycle, ispec, ip, itraj, jtraj
+    logical,intent(in),optional :: if_density
+    logical :: if_overlap_matrix_t
+    logical :: if_interaction_matrix_t
+    logical :: if_density_t
+    integer :: icycle, ispec, ip, itraj, jtraj, ip_tot
     integer :: dest, source
     type species_buffer
        complex(8),allocatable :: zwfn_sbuf(:,:,:) ! send buffer
@@ -166,11 +173,14 @@ contains
     integer :: ntraj_s_rbuf, ntraj_e_rbuf
     complex(8) :: ztmp
 
-    if_overlap_matrix_t      = .true.
+    if_overlap_matrix_t      = .false.
     if(present(if_overlap_matrix))     if_overlap_matrix_t = if_overlap_matrix
 
-    if_interaction_matrix_t  = .true.
+    if_interaction_matrix_t  = .false.
     if(present(if_interaction_matrix)) if_interaction_matrix_t = if_interaction_matrix
+
+    if_density_t  = .false.
+    if(present(if_density)) if_density_t = if_density
 
 
     allocate(spec_buf(num_species))
@@ -215,16 +225,19 @@ contains
         do itraj = ntraj_start, ntraj_end
           do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
 
-            ztmp = 1d0
+            ip_tot = 0
             do ispec = 1, num_species
               do ip = 1, spec(ispec)%nparticle
-                ztmp = ztmp * sum(conjg(traj(itraj)%spec(ispec)%zwfn(:,ip)) &
+                ip_tot = ip_tot + 1
+                ztmp = sum(conjg(traj(itraj)%spec(ispec)%zwfn(:,ip)) &
                   *spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1)) &
                   *spec(ispec)%dV
+                zMm_sub_icwf(itraj,jtraj,ip_tot) = ztmp
+                zMm_sub_icwf(jtraj,itraj,ip_tot) = conjg(ztmp)
               end do
             end do
-            zMm_icwf(itraj,jtraj) =       ztmp
-            zMm_icwf(jtraj,itraj) = conjg(ztmp)
+            zMm_icwf(itraj,jtraj) = product(zMm_sub_icwf(itraj,jtraj,:))
+            zMm_icwf(jtraj,itraj) = conjg(zMm_icwf(itraj,jtraj))
 
           end do
         end do
