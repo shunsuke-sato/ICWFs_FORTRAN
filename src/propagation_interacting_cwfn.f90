@@ -153,14 +153,14 @@ contains
 
   subroutine calc_icwf_matrix(if_overlap_matrix, &
                               if_interaction_matrix, &
-                              if_density)
+                              if_onebody_density)
     implicit none
     logical,intent(in),optional :: if_overlap_matrix
     logical,intent(in),optional :: if_interaction_matrix
-    logical,intent(in),optional :: if_density
+    logical,intent(in),optional :: if_onebody_density
     logical :: if_overlap_matrix_t
     logical :: if_interaction_matrix_t
-    logical :: if_density_t
+    logical :: if_onebody_density_t
     integer :: icycle, ispec, ip, itraj, jtraj, ip_tot
     integer :: dest, source
     type species_buffer
@@ -179,8 +179,8 @@ contains
     if_interaction_matrix_t  = .false.
     if(present(if_interaction_matrix)) if_interaction_matrix_t = if_interaction_matrix
 
-    if_density_t  = .false.
-    if(present(if_density)) if_density_t = if_density
+    if_onebody_density_t  = .false.
+    if(present(if_onebody_density)) if_onebody_density_t = if_onebody_density
 
 
     allocate(spec_buf(num_species))
@@ -191,6 +191,10 @@ contains
       allocate(spec_buf(ispec)%zwfn_rbuf(spec(ispec)%ngrid_tot,spec(ispec)%nparticle,ntraj_size))
     end do
 
+    if(if_overlap_matrix_t)then
+      zMm_sub_icwf = 0d0
+      zMm_icwf = 0d0
+    end if
 
     do icycle = 0,comm_nproc_global-1
       if(icycle == 0)then
@@ -233,19 +237,26 @@ contains
                   *spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1)) &
                   *spec(ispec)%dV
                 zMm_sub_icwf(itraj,jtraj,ip_tot) = ztmp
-                zMm_sub_icwf(jtraj,itraj,ip_tot) = conjg(ztmp)
+ !               zMm_sub_icwf(jtraj,itraj,ip_tot) = conjg(ztmp)
               end do
             end do
             zMm_icwf(itraj,jtraj) = product(zMm_sub_icwf(itraj,jtraj,:))
-            zMm_icwf(jtraj,itraj) = conjg(zMm_icwf(itraj,jtraj))
+!            zMm_icwf(jtraj,itraj) = conjg(zMm_icwf(itraj,jtraj))
 
           end do
         end do
       end if
       
+      if(if_onebody_density_t)then
+      end if
+
+
     end do
 
-    if(if_overlap_matrix_t)call comm_bcast(zMm_icwf)
+    if(if_overlap_matrix_t)then
+      call comm_allreduce(zMm_sub_icwf)
+      call comm_allreduce(zMm_icwf)
+    end if
 
 
 
