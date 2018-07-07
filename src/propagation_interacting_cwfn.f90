@@ -22,9 +22,17 @@ subroutine propagation_interacting_cwfn
 
   type(trajectory_icwf),allocatable :: traj(:)
 
+  integer :: it
+
   call initialize_icwfn_propagation
   call sampling_icwfn
   call initialize_icwfn_coefficient
+
+
+  Time_propagation: do it = 1, num_time_step
+    call dt_evolve_Runge_Kutta4_icwfn
+
+  end do Time_propagation
 
 
 contains
@@ -261,5 +269,44 @@ contains
 
 
   end subroutine calc_icwf_matrix
+
+
+  subroutine dt_evolve_Runge_Kutta4_icwfn
+    implicit none
+    integer :: irk
+
+    type(trajectory_icwf),allocatable :: traj_rk(:,:)
+    complex(8) :: zC_rk(num_trajectory,0:4)
+
+    allocate(traj_rk(ntraj_start:ntraj_end,0:4))
+
+    do irk = 0, 4
+      do itraj = ntraj_start, ntraj_end
+        allocate(traj_rk(itraj,irk)%spec(num_species))
+
+        do ispec = 1, num_species
+        
+          allocate(traj_rk(itraj,irk)%spec(ispec)%zwfn(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
+          allocate(traj_rk(itraj,irk)%spec(ispec)%r_p(spec(ispec)%ndim,spec(ispec)%nparticle))
+          
+        end do
+      end do
+    end do
+
+! RK0
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj_rk(itraj,irk)%spec(ispec)%zwfn(:,:) &
+          = traj(itraj)%spec(ispec)%zwfn(:,:)
+
+        traj_rk(itraj,irk)%spec(ispec)%r_p(:,:) &
+          = traj(itraj)%spec(ispec)%r_p(:,:)
+          
+      end do
+    end do
+
+
+  end subroutine dt_evolve_Runge_Kutta4_icwfn
 end subroutine propagation_interacting_cwfn
+
 
