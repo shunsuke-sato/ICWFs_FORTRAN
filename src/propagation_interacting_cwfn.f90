@@ -204,6 +204,10 @@ contains
       zMm_icwf = 0d0
     end if
 
+    if(if_interaction_matrix_t)then
+      zWm_icwf = 0d0
+    end if
+
     do icycle = 0,comm_nproc_global-1
       if(icycle == 0)then
         ntraj_s_rbuf = ntraj_start
@@ -241,15 +245,114 @@ contains
             do ispec = 1, num_species
               do ip = 1, spec(ispec)%nparticle
                 ip_tot = ip_tot + 1
-                ztmp = sum(conjg(traj(itraj)%spec(ispec)%zwfn(:,ip)) &
-                  *spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1)) &
+                ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip) &
+                  *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
                   *spec(ispec)%dV
-                zMm_sub_icwf(itraj,jtraj,ip_tot) = ztmp
+                zMm_sub_icwf(jtraj,itraj,ip_tot) = ztmp
  !               zMm_sub_icwf(jtraj,itraj,ip_tot) = conjg(ztmp)
               end do
             end do
-            zMm_icwf(itraj,jtraj) = product(zMm_sub_icwf(itraj,jtraj,:))
+            zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
 !            zMm_icwf(jtraj,itraj) = conjg(zMm_icwf(itraj,jtraj))
+
+          end do
+        end do
+      end if
+
+      if(if_interaction_matrix_t)then
+        do itraj = ntraj_start, ntraj_end
+          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+
+            ip_tot = 0
+            do ispec = 1, num_species
+              do ip = 1, spec(ispec)%nparticle
+                ip_tot = ip_tot + 1
+
+                jp_tot = 0
+                do jspec = 1, num_species
+                  do jp = 1, spec(jspec)%nparticle
+                    jp_tot = jp_tot + 1
+                    if(ip_tot <= jp_tot)cycle
+
+                    select case(num_total_particle)
+                    case(2)
+                      if(ispec == 1 .and. jspec == 1)then
+                        ztmp = 0d0
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                        do ix2 = 1, spec(jspec)%ngrid_tot
+                          vint_t = two_body_pot_1(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
+                            -two_body_pot_1(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(ispec)%r_p(:,ip))
+                          -two_body_pot_1(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(jspec)%r_p(:,jp))
+
+                          ztmp = ztmp & 
+                            +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                            *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                            *conjg(&
+                            spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1)&
+                            *spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
+                        end do
+                        end do
+                      else if(ispec == 2 .and. jspec == 2)then
+                        ztmp = 0d0
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                        do ix2 = 1, spec(jspec)%ngrid_tot
+                          vint_t = two_body_pot_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
+                            -two_body_pot_2(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(ispec)%r_p(:,ip))
+                          -two_body_pot_2(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(jspec)%r_p(:,jp))
+
+                          ztmp = ztmp & 
+                            +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                            *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                            *conjg(&
+                            spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1)&
+                            *spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
+                        end do
+                        end do
+                      else if((ispec == 1 .and. jspec == 2) &
+                        .or. (ispec == 2 .and. jspec == 1))then
+                        ztmp = 0d0
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                        do ix2 = 1, spec(jspec)%ngrid_tot
+                      vint_t = two_body_pot_1_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
+                        -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
+                        traj(itraj)%spec(ispec)%r_p(:,ip))
+                      -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
+                        traj(itraj)%spec(jspec)%r_p(:,jp))
+
+                      ztmp = ztmp & 
+                        +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                        *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                        *conjg(&
+                        spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1)&
+                        *spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
+                        *vint_t
+                      
+                        end do
+                        end do
+                      end if
+
+                      ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
+                    case default
+                      write(message(2),"(I7)")num_total_particle
+                      message(1) = 'Fatal Error: calc_icwf_matrix is not implemented for'
+                      message(2) = '           : num_total_particle = '//trim(message(2))
+                      call error_finalize(message(1:2))
+                    end select
+
+                  end do
+                end do
+              end do
+            end do
+
+            zWm_icwf(jtraj,itraj) = ztmp
 
           end do
         end do
