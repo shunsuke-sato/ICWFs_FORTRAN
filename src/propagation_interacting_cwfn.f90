@@ -381,9 +381,9 @@ contains
     type(trajectory_icwf),allocatable :: traj_rk(:,:)
     complex(8) :: zC_rk(num_trajectory,0:4)
 
-    allocate(traj_rk(ntraj_start:ntraj_end,0:4))
+    allocate(traj_rk(ntraj_start:ntraj_end,-1:4))
 
-    do irk = 0, 4
+    do irk = -1, 4
       do itraj = ntraj_start, ntraj_end
         allocate(traj_rk(itraj,irk)%spec(num_species))
 
@@ -396,6 +396,52 @@ contains
       end do
     end do
 
+! RK -1 (original wavefunction)
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj_rk(itraj,-1)%spec(ispec)%zwfn = traj(itraj)%spec(ispec)%zwfn
+        traj_rk(itraj,-1)%spec(ispec)%r_p = traj(itraj)%spec(ispec)%r_p
+      end do
+    end do
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+
+
+
+! calc rk1
+! update wavefunction
+! update matrixelement
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+
+! calc rk2
+! update wavefunction
+! update matrixelement
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+
+
+! calc rk3
+! update wavefunction
+! update matrixelement
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+
+
+! calc rk4
+! update wavefunction
+! update matrixelement
+
+
+
+! sum rk1 - rk4
+
+
+! -------------------------
 ! RK0
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
