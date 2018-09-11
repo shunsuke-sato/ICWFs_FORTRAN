@@ -11,6 +11,8 @@ subroutine propagation_interacting_cwfn
   type species_icwf
      complex(8),allocatable :: zwfn(:,:)  ! wavefunction
      real(8),allocatable :: r_p(:,:) ! Position of particle
+     real(8),allocatable :: v_p(:,:) ! Velocity of particle
+     real(8),allocatable :: veff(:,:) ! One-body effective potential
   end type species_icwf
 
 
@@ -63,6 +65,8 @@ contains
         
         allocate(traj(itraj)%spec(ispec)%zwfn(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
         allocate(traj(itraj)%spec(ispec)%r_p(spec(ispec)%ndim,spec(ispec)%nparticle))
+        allocate(traj(itraj)%spec(ispec)%v_p(spec(ispec)%ndim,spec(ispec)%nparticle))
+        allocate(traj(itraj)%spec(ispec)%veff(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
         
       end do
     end do
@@ -404,56 +408,215 @@ contains
       end do
     end do
 
+
+! RK1 =========================================================================
+    irk = 1
     call calc_icwf_matrix(if_overlap_matrix=.true., &
                               if_interaction_matrix=.true.)
 
+    call calc_velocity_icwfn
+    call calc_veff_icwfn
 
-
-! calc rk1
-! update wavefunction
-! update matrixelement
-
-    call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
-
-! calc rk2
-! update wavefunction
-! update matrixelement
-
-    call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
-
-
-! calc rk3
-! update wavefunction
-! update matrixelement
-
-    call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
-
-
-! calc rk4
-! update wavefunction
-! update matrixelement
-
-
-
-! sum rk1 - rk4
-
-
-! -------------------------
-! RK0
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
-        traj_rk(itraj,irk)%spec(ispec)%zwfn(:,:) &
-          = traj(itraj)%spec(ispec)%zwfn(:,:)
+        do ip = 1, spec(ispec)%nparticle
+          call laplacian(traj(itraj)%spec(ispec)%zwfn(:,ip), &
+                         traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip), &
+                         spec(ispec)%ngrid,          &
+                         spec(ispec)%dx,             &
+                         -0.5d0/spec(ispec)%mass)
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) = -zI*(&
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) &
+        + traj(itraj)%spec(ispec)%veff(:,ip)&
+        * traj(itraj)%spec(ispec)%zwfn(:,ip) )
 
-        traj_rk(itraj,irk)%spec(ispec)%r_p(:,:) &
-          = traj(itraj)%spec(ispec)%r_p(:,:)
-          
+          traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
+            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+
+        end do
       end do
     end do
 
+
+! RK2 =========================================================================
+    irk = 2
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
+          +0.5d0*time_step*traj_rk(itraj,1)%spec(ispec)%zwfn
+
+        traj(itraj)%spec(ispec)%r_p = traj_rk(itraj,-1)%spec(ispec)%r_p &
+          +0.5d0*time_step*traj_rk(itraj,1)%spec(ispec)%r_p
+
+      end do
+    end do
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+    call calc_velocity_icwfn
+    call calc_veff_icwfn
+
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        do ip = 1, spec(ispec)%nparticle
+          call laplacian(traj(itraj)%spec(ispec)%zwfn(:,ip), &
+                         traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip), &
+                         spec(ispec)%ngrid,          &
+                         spec(ispec)%dx,             &
+                         -0.5d0/spec(ispec)%mass)
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) = -zI*(&
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) &
+        + traj(itraj)%spec(ispec)%veff(:,ip)&
+        * traj(itraj)%spec(ispec)%zwfn(:,ip) )
+
+          traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
+            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+
+        end do
+      end do
+    end do
+
+! RK3 =========================================================================
+    irk = 3
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
+          +0.5d0*time_step*traj_rk(itraj,2)%spec(ispec)%zwfn
+
+        traj(itraj)%spec(ispec)%r_p = traj_rk(itraj,-1)%spec(ispec)%r_p &
+          +0.5d0*time_step*traj_rk(itraj,2)%spec(ispec)%r_p
+
+      end do
+    end do
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+    call calc_velocity_icwfn
+    call calc_veff_icwfn
+
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        do ip = 1, spec(ispec)%nparticle
+          call laplacian(traj(itraj)%spec(ispec)%zwfn(:,ip), &
+                         traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip), &
+                         spec(ispec)%ngrid,          &
+                         spec(ispec)%dx,             &
+                         -0.5d0/spec(ispec)%mass)
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) = -zI*(&
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) &
+        + traj(itraj)%spec(ispec)%veff(:,ip)&
+        * traj(itraj)%spec(ispec)%zwfn(:,ip) )
+
+          traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
+            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+
+        end do
+      end do
+    end do
+
+! RK4 =========================================================================
+    irk = 4
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
+          +time_step*traj_rk(itraj,2)%spec(ispec)%zwfn
+
+        traj(itraj)%spec(ispec)%r_p = traj_rk(itraj,-1)%spec(ispec)%r_p &
+          +time_step*traj_rk(itraj,2)%spec(ispec)%r_p
+
+      end do
+    end do
+
+    call calc_icwf_matrix(if_overlap_matrix=.true., &
+                              if_interaction_matrix=.true.)
+    call calc_velocity_icwfn
+    call calc_veff_icwfn
+
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        do ip = 1, spec(ispec)%nparticle
+          call laplacian(traj(itraj)%spec(ispec)%zwfn(:,ip), &
+                         traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip), &
+                         spec(ispec)%ngrid,          &
+                         spec(ispec)%dx,             &
+                         -0.5d0/spec(ispec)%mass)
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) = -zI*(&
+          traj_rk(itraj,irk)%spec(ispec)%zwfn(:,ip) &
+        + traj(itraj)%spec(ispec)%veff(:,ip)&
+        * traj(itraj)%spec(ispec)%zwfn(:,ip) )
+
+          traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
+            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+
+        end do
+      end do
+    end do
+
+!-----------------------------------------------------------
+
+
+  contains
+    subroutine calc_velocity_icwfn
+      implicit none
+      integer :: itraj, ispec, ip
+
+      do itraj = ntraj_start, ntraj_end
+        do ispec = 1, num_species
+          do ip = 1, spec(ispec)%nparticle
+
+            call calc_velocity_from_cond_wf(spec(ispec),traj(itraj)%spec(ispec)%zwfn(:,ip), &
+              traj(itraj)%spec(ispec)%r_p(:,ip),traj(itraj)%spec(ispec)%v_pt(:,ip))
+
+          end do
+        end do
+      end do
+
+    end subroutine calc_velocity_icwfn
+
+    subroutine calc_veff_icwfn
+    implicit none
+    integer :: itraj, ispec, ip, jspec, jp    
+    
+    ! calc veff
+    do itraj = ntraj_start, ntraj_end
+
+    do ispec = 1, num_species
+      do ip = 1, spec(ispec)%nparticle
+        traj(itraj)%spec(ispec)%veff(:,ip) = spec(ispec)%v0(:)
+        do jspec = 1, num_species
+          do jp = 1, spec(jspec)%nparticle
+            if( ispec == jspec .and. ip == jp)cycle
+            if(ispec == 1 .and. jspec == 1)then
+              do ix = 1, spec(ispec)%ngrid_tot
+                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                  + two_body_pot_1(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+              end do
+            else if(ispec == 2 .and. jspec == 2)then          
+              do ix = 1, spec(ispec)%ngrid_tot
+                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                  + two_body_pot_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+              end do
+            else if(ispec == 1 .and. jspec == 2)then          
+              do ix = 1, spec(ispec)%ngrid_tot
+                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                  + two_body_pot_1_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+              end do
+            else if(ispec == 2 .and. jspec == 1)then          
+              do ix = 1, spec(ispec)%ngrid_tot
+                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                  + two_body_pot_1_2(traj(itraj)%spec(ispec)%r_p(:,jp),spec(ispec)%x(:,ix))
+              end do
+            else
+              stop 'Error!!'
+            end if
+          end do
+        end do
+      end do
+    end do
+
+    end do
+    
+  end subroutine calc_veff_icwfn
 
   end subroutine dt_evolve_Runge_Kutta4_icwfn
 end subroutine propagation_interacting_cwfn
