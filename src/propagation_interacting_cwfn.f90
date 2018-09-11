@@ -13,6 +13,7 @@ subroutine propagation_interacting_cwfn
      real(8),allocatable :: r_p(:,:) ! Position of particle
      real(8),allocatable :: v_p(:,:) ! Velocity of particle
      real(8),allocatable :: veff(:,:) ! One-body effective potential
+     real(8),allocatable :: rho(:,:) ! One-body effective potential
   end type species_icwf
 
 
@@ -23,6 +24,7 @@ subroutine propagation_interacting_cwfn
   end type trajectory_icwf
 
   type(trajectory_icwf),allocatable :: traj(:)
+  type(species_icwf),allocatable :: spec_rho(:)
 
   integer :: it
 
@@ -71,6 +73,12 @@ contains
       end do
     end do
     
+
+
+    allocate(spec_rho(num_species))
+    do ispec = 1, num_species
+      allocate(spec_rho(ispec)%rho(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
+    end do
     
   end subroutine initialize_icwfn_propagation
   !-----------------------------------------------------------------------------------------
@@ -210,6 +218,12 @@ contains
 
     if(if_interaction_matrix_t)then
       zWm_icwf = 0d0
+    end if
+
+    if(if_onebody_density_t)then
+      do ispec = 1, num_species
+        spec_rho(ispec)%rho = 0d0
+      end do
     end if
 
     do icycle = 0,comm_nproc_global-1
@@ -363,6 +377,35 @@ contains
       end if
       
       if(if_onebody_density_t)then
+
+        do itraj = ntraj_start, ntraj_end
+          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+
+            ip_tot = 0
+            do ispec = 1, num_species
+              do ip = 1, spec(ispec)%nparticle
+                ip_tot = ip_tot + 1
+
+                ztmp = 1d0
+                jp_tot = 0
+                do jspec = 1, num_species
+                  do jp = 1, spec(jspec)%nparticle
+                    jp_tot = jp_tot + 1
+                    if(ip_tot /= jp_tot)then
+                      ztmp = ztmp*zMm_sub_icwf(jtraj,itraj,ip_tot)
+                    end if
+                  end do
+                end do
+
+                spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
+                  +conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+                  *conjg(traj(jtraj)%spec(ispec)%zwfn(:,ip))&
+                  *traj(itraj)%spec(ispec)%zwfn(:,ip)
+
+              end do
+            end do
+
+
       end if
 
 
@@ -373,6 +416,11 @@ contains
       call comm_allreduce(zMm_icwf)
     end if
 
+    if(if_onebody_density_t)then
+      do ispec = 1, num_species
+        call comm_allreduce(spec_rho(ispec)%rho)
+      end do
+    end if
 
 
   end subroutine calc_icwf_matrix
@@ -654,6 +702,8 @@ contains
   end subroutine calc_veff_icwfn
 
   end subroutine dt_evolve_Runge_Kutta4_icwfn
+
+
 end subroutine propagation_interacting_cwfn
 
 
