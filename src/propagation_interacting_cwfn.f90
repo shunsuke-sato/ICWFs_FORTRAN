@@ -569,6 +569,25 @@ contains
     end do
 
 !-----------------------------------------------------------
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
+          +time_step/6d0*(&
+          traj_rk(itraj,1)%spec(ispec)%zwfn &
+   +2d0 * traj_rk(itraj,2)%spec(ispec)%zwfn &
+   +2d0 * traj_rk(itraj,3)%spec(ispec)%zwfn &
+          traj_rk(itraj,4)%spec(ispec)%zwfn )
+
+        traj(itraj)%spec(ispec)%r_p = traj_rk(itraj,-1)%spec(ispec)%r_p &
+          +time_step/6d0*(&
+          traj_rk(itraj,1)%spec(ispec)%r_p &
+   +2d0 * traj_rk(itraj,2)%spec(ispec)%r_p &
+   +2d0 * traj_rk(itraj,3)%spec(ispec)%r_p &
+          traj_rk(itraj,4)%spec(ispec)%r_p )
+
+
+      end do
+    end do
 
 
   contains
