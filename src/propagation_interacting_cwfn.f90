@@ -383,7 +383,8 @@ contains
     integer :: irk
 
     type(trajectory_icwf),allocatable :: traj_rk(:,:)
-    complex(8) :: zC_rk(num_trajectory,0:4)
+    complex(8) :: zC_rk(num_trajectory,-1:4)
+    complex(8) :: zMm_pinv(num_trajectory,num_trajectory)
 
     allocate(traj_rk(ntraj_start:ntraj_end,-1:4))
 
@@ -401,6 +402,7 @@ contains
     end do
 
 ! RK -1 (original wavefunction)
+    zC_rk(:,-1) = zC_icwf(:)
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
         traj_rk(itraj,-1)%spec(ispec)%zwfn = traj(itraj)%spec(ispec)%zwfn
@@ -413,6 +415,8 @@ contains
     irk = 1
     call calc_icwf_matrix(if_overlap_matrix=.true., &
                               if_interaction_matrix=.true.)
+    call pseudo_inverse(zMm_icwf,zMm_pinv)
+    zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
 
     call calc_velocity_icwfn
     call calc_veff_icwfn
@@ -440,6 +444,7 @@ contains
 
 ! RK2 =========================================================================
     irk = 2
+    zC_icwf(:) = zC_rk(:,-1) + 0.5d0*time_step*zC_rk(:,1)
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
         traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
@@ -453,6 +458,9 @@ contains
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
                               if_interaction_matrix=.true.)
+    call pseudo_inverse(zMm_icwf,zMm_pinv)
+    zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
+
     call calc_velocity_icwfn
     call calc_veff_icwfn
 
@@ -478,6 +486,7 @@ contains
 
 ! RK3 =========================================================================
     irk = 3
+    zC_icwf(:) = zC_rk(:,-1) + 0.5d0*time_step*zC_rk(:,2)
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
         traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
@@ -491,6 +500,9 @@ contains
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
                               if_interaction_matrix=.true.)
+    call pseudo_inverse(zMm_icwf,zMm_pinv)
+    zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
+
     call calc_velocity_icwfn
     call calc_veff_icwfn
 
@@ -516,6 +528,7 @@ contains
 
 ! RK4 =========================================================================
     irk = 4
+    zC_icwf(:) = zC_rk(:,-1) + time_step*zC_rk(:,3)
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
         traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
@@ -529,6 +542,9 @@ contains
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
                               if_interaction_matrix=.true.)
+    call pseudo_inverse(zMm_icwf,zMm_pinv)
+    zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
+
     call calc_velocity_icwfn
     call calc_veff_icwfn
 
