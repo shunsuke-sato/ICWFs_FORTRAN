@@ -28,12 +28,12 @@ contains
     
 !    pot = 0d0
 ! electron potential in Shin-Metiu model
-!    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
-!          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
+    pot = - erf_x(abs(x(1)-L/2d0)/Rr)/Rr &
+          - erf_x(abs(x(1)+L/2d0)/Rl)/Rl
 
 ! electron potential for electron-scattering problem
 
-    pot = -1d0/sqrt(2d0+x(1)**2)
+!    pot = -1d0/sqrt(2d0+x(1)**2)
 
 ! harmonic oscillator
 !    pot = 0.5d0*x(1)**2
@@ -50,9 +50,9 @@ contains
     
 !    pot = 0d0
 ! ion potential in Shin-Metiu model
-!    pot = 1d0/abs(L/2d0-x(1)) + 1d0/abs(L/2d0+x(1))
+    pot = 1d0/abs(L/2d0-x(1)) + 1d0/abs(L/2d0+x(1))
 
-    pot = 0d0
+!    pot = 0d0
 
 
   end function one_body_pot_2
@@ -91,7 +91,7 @@ contains
     
 !    pot = 0d0
 ! electron-ion potential in Shin-Metiu model
-!    pot = -erf_x(abs(x1(1)-x2(1))/Rf)/Rf
+    pot = -erf_x(abs(x1(1)-x2(1))/Rf)/Rf
 
     pot = 0d0
 

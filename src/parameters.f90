@@ -17,8 +17,8 @@ subroutine parameters
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters
-!  call shin_metiu_parameters
-  call ee_scattering_parameters
+  call shin_metiu_parameters
+!  call ee_scattering_parameters
 
 
   num_total_particle = sum(spec(:)%nparticle)
