@@ -37,7 +37,7 @@ subroutine propagation_interacting_cwfn
                        ,if_onebody_density=.true.)
   call density_output(0)
   Time_propagation: do it = 1, num_time_step
-    write(*,*)it,comm_id_global
+    if(if_root_global)write(*,*)it,sum(conjg(zC_icwf)*matmul(zMm_icwf,zC_icwf))
     call dt_evolve_Runge_Kutta4_icwfn
     if(mod(it,20) == 0)then
       call calc_icwf_matrix(if_onebody_density=.true.)
@@ -398,7 +398,7 @@ contains
                   do jp = 1, spec(jspec)%nparticle
                     jp_tot = jp_tot + 1
                     if(ip_tot /= jp_tot)then
-                      ztmp = ztmp*zMm_sub_icwf(jtraj,itraj,ip_tot)
+                      ztmp = ztmp*zMm_sub_icwf(jtraj,itraj,jp_tot)
                     end if
                   end do
                 end do
