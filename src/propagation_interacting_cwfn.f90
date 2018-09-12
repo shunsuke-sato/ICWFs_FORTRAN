@@ -303,9 +303,7 @@ contains
                         do ix2 = 1, spec(jspec)%ngrid_tot
                           vint_t = two_body_pot_1(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                             -two_body_pot_1(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(ispec)%r_p(:,ip))
-                          -two_body_pot_1(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(jspec)%r_p(:,jp))
+                            traj(itraj)%spec(ispec)%r_p(:,ip)) 
 
                           ztmp = ztmp & 
                             +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
@@ -324,8 +322,7 @@ contains
                           vint_t = two_body_pot_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                             -two_body_pot_2(spec(jspec)%x(:,ix2),&
                             traj(itraj)%spec(ispec)%r_p(:,ip))
-                          -two_body_pot_2(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(jspec)%r_p(:,jp))
+
 
                           ztmp = ztmp & 
                             +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
@@ -345,8 +342,6 @@ contains
                       vint_t = two_body_pot_1_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                         -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
                         traj(itraj)%spec(ispec)%r_p(:,ip))
-                      -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
-                        traj(itraj)%spec(jspec)%r_p(:,jp))
 
                       ztmp = ztmp & 
                         +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
@@ -407,6 +402,8 @@ contains
 
               end do
             end do
+          end do
+        end do
 
 
       end if
@@ -486,7 +483,7 @@ contains
         * traj(itraj)%spec(ispec)%zwfn(:,ip) )
 
           traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
-            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+            = traj(itraj)%spec(ispec)%v_p(:,ip)
 
         end do
       end do
@@ -529,7 +526,7 @@ contains
         * traj(itraj)%spec(ispec)%zwfn(:,ip) )
 
           traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
-            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+            = traj(itraj)%spec(ispec)%v_p(:,ip)
 
         end do
       end do
@@ -571,7 +568,7 @@ contains
         * traj(itraj)%spec(ispec)%zwfn(:,ip) )
 
           traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
-            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+            = traj(itraj)%spec(ispec)%v_p(:,ip)
 
         end do
       end do
@@ -613,7 +610,7 @@ contains
         * traj(itraj)%spec(ispec)%zwfn(:,ip) )
 
           traj_rk(itraj,irk)%spec(ispec)%r_p(:,ip) &
-            = spec_t(ispec)%traj(itraj)%spec(ispec)%v_p(:,ip)
+            = traj(itraj)%spec(ispec)%v_p(:,ip)
 
         end do
       end do
