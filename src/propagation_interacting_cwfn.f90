@@ -707,7 +707,7 @@ contains
               else if(ispec == 2 .and. jspec == 1)then          
                 do ix = 1, spec(ispec)%ngrid_tot
                   traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
-                    + two_body_pot_1_2(traj(itraj)%spec(ispec)%r_p(:,jp),spec(ispec)%x(:,ix))
+                    + two_body_pot_1_2(traj(itraj)%spec(jspec)%r_p(:,jp),spec(ispec)%x(:,ix))
                 end do
               else
                 stop 'Error!!'
