@@ -404,7 +404,7 @@ contains
                 end do
 
                 spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
-                  +conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+                  +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
                   *conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
                   *traj(itraj)%spec(ispec)%zwfn(:,ip)
