@@ -37,6 +37,7 @@ subroutine propagation_interacting_cwfn
                        ,if_onebody_density=.true.)
   call density_output(0)
   Time_propagation: do it = 1, num_time_step
+    write(*,*)it,comm_id_global
     call dt_evolve_Runge_Kutta4_icwfn
 
   end do Time_propagation
@@ -400,7 +401,8 @@ contains
 
                 spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
                   +conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
-                  *conjg(traj(jtraj)%spec(ispec)%zwfn(:,ip))&
+                  *conjg(&
+                  spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
                   *traj(itraj)%spec(ispec)%zwfn(:,ip)
 
               end do
@@ -723,7 +725,6 @@ contains
           ,sum(spec_rho(ispec)%rho(ix,:))
       end do
 
-      allocate(spec_rho(ispec)%rho(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
       close(30)
     end do
 
