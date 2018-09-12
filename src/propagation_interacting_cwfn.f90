@@ -39,6 +39,10 @@ subroutine propagation_interacting_cwfn
   Time_propagation: do it = 1, num_time_step
     write(*,*)it,comm_id_global
     call dt_evolve_Runge_Kutta4_icwfn
+    if(mod(it,20) == 0)then
+      call calc_icwf_matrix(if_onebody_density=.true.)
+      call density_output(it)
+    end if
 
   end do Time_propagation
 
@@ -713,6 +717,8 @@ contains
     character(256) :: cicount, cispec, filename
     integer :: ispec, ix
 
+    if(if_root_global)then
+
     write(cicount,"(I9.9)")icount
     
 
@@ -728,6 +734,7 @@ contains
       close(30)
     end do
 
+    end if
 
   end subroutine density_output
 
