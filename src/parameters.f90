@@ -12,8 +12,8 @@ subroutine parameters
   propagation_method = INT_CWF
 
   num_trajectory = 4
-  time_step = 0.01d0
-  propagation_time = 200d0 !40d0*fs
+  time_step = 0.02d0
+  propagation_time = 40d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters

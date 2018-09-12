@@ -425,6 +425,10 @@ contains
       call comm_allreduce(zMm_icwf)
     end if
 
+    if(if_interaction_matrix_t)then
+      call comm_allreduce(zWm_icwf)
+    end if
+
     if(if_onebody_density_t)then
       do ispec = 1, num_species
         call comm_allreduce(spec_rho(ispec)%rho)
@@ -626,6 +630,11 @@ contains
     end do
 
 !-----------------------------------------------------------
+
+    zC_icwf(:) = zC_rk(:,-1) + time_step/6d0*(&
+      zC_rk(:,1)+2d0*zC_rk(:,2)+2d0*zC_rk(:,3)+zC_rk(:,4))
+
+
     do itraj = ntraj_start, ntraj_end
       do ispec = 1, num_species
         traj(itraj)%spec(ispec)%zwfn = traj_rk(itraj,-1)%spec(ispec)%zwfn &
