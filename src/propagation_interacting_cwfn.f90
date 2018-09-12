@@ -311,7 +311,9 @@ contains
                         do ix2 = 1, spec(jspec)%ngrid_tot
                           vint_t = two_body_pot_1(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                             -two_body_pot_1(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(ispec)%r_p(:,ip)) 
+                            traj(itraj)%spec(ispec)%r_p(:,ip))&
+                            -two_body_pot_1(spec(ispec)%x(:,ix1),&
+                            traj(itraj)%spec(jspec)%r_p(:,jp))
 
                           ztmp = ztmp & 
                             +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
@@ -329,7 +331,9 @@ contains
                         do ix2 = 1, spec(jspec)%ngrid_tot
                           vint_t = two_body_pot_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                             -two_body_pot_2(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(ispec)%r_p(:,ip))
+                            traj(itraj)%spec(ispec)%r_p(:,ip))&
+                            -two_body_pot_2(spec(ispec)%x(:,ix1),&
+                            traj(itraj)%spec(jspec)%r_p(:,jp))
 
 
                           ztmp = ztmp & 
@@ -349,7 +353,9 @@ contains
                         do ix2 = 1, spec(jspec)%ngrid_tot
                       vint_t = two_body_pot_1_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
                         -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
-                        traj(itraj)%spec(ispec)%r_p(:,ip))
+                        traj(itraj)%spec(ispec)%r_p(:,ip))&
+                        -two_body_pot_1_2(spec(ispec)%x(:,ix1),&
+                        traj(itraj)%spec(jspec)%r_p(:,jp))
 
                       ztmp = ztmp & 
                         +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
