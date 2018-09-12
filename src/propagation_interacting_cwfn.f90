@@ -32,7 +32,10 @@ subroutine propagation_interacting_cwfn
   call sampling_icwfn
   call initialize_icwfn_coefficient
 
-
+  call calc_icwf_matrix(if_overlap_matrix=.true. &
+                       ,if_interaction_matrix=.false. &
+                       ,if_onebody_density=.true.)
+  call density_output(0)
   Time_propagation: do it = 1, num_time_step
     call dt_evolve_Runge_Kutta4_icwfn
 
@@ -703,6 +706,30 @@ contains
 
   end subroutine dt_evolve_Runge_Kutta4_icwfn
 
+  subroutine density_output(icount)
+    implicit none
+    integer, intent(in) :: icount
+    character(256) :: cicount, cispec, filename
+    integer :: ispec, ix
+
+    write(cicount,"(I9.9)")icount
+    
+
+    do ispec = 1, num_species
+      write(cispec,"(I1.1)")ispec
+      filename = trim(icount)//"spec_"//trim(cispec)//".out"
+      open(30,file=filename)
+      do ix = 1, spec(ispec)%ngrid_tot
+        write(30,"(999e26.16e3)")spec(ispec)%x(:,ix)&
+          ,sum(spec_rho(ispec)%rho(ix,:))
+      end do
+
+      allocate(spec_rho(ispec)%rho(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
+      close(30)
+    end do
+
+
+  end subroutine density_output
 
 end subroutine propagation_interacting_cwfn
 
