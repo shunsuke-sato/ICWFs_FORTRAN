@@ -185,6 +185,8 @@ contains
     logical :: if_interaction_matrix_t
     logical :: if_onebody_density_t
     integer :: icycle, ispec, ip, itraj, jtraj, ip_tot
+    integer :: jspec, jp, jp_tot
+    integer :: ix1, ix2
     integer :: dest, source
     type species_buffer
        complex(8),allocatable :: zwfn_sbuf(:,:,:) ! send buffer
@@ -194,6 +196,7 @@ contains
     integer :: ntraj_size
     integer :: ntraj_s_sbuf, ntraj_e_sbuf
     integer :: ntraj_s_rbuf, ntraj_e_rbuf
+    real(8) :: vint_t
     complex(8) :: ztmp
 
     if_overlap_matrix_t      = .false.
@@ -428,7 +431,7 @@ contains
 
   subroutine dt_evolve_Runge_Kutta4_icwfn
     implicit none
-    integer :: irk
+    integer :: irk, ip, ispec, itraj
 
     type(trajectory_icwf),allocatable :: traj_rk(:,:)
     complex(8) :: zC_rk(num_trajectory,-1:4)
@@ -624,84 +627,83 @@ contains
           traj_rk(itraj,1)%spec(ispec)%zwfn &
    +2d0 * traj_rk(itraj,2)%spec(ispec)%zwfn &
    +2d0 * traj_rk(itraj,3)%spec(ispec)%zwfn &
-          traj_rk(itraj,4)%spec(ispec)%zwfn )
+        + traj_rk(itraj,4)%spec(ispec)%zwfn )
 
         traj(itraj)%spec(ispec)%r_p = traj_rk(itraj,-1)%spec(ispec)%r_p &
           +time_step/6d0*(&
           traj_rk(itraj,1)%spec(ispec)%r_p &
    +2d0 * traj_rk(itraj,2)%spec(ispec)%r_p &
    +2d0 * traj_rk(itraj,3)%spec(ispec)%r_p &
-          traj_rk(itraj,4)%spec(ispec)%r_p )
+        + traj_rk(itraj,4)%spec(ispec)%r_p )
 
 
       end do
     end do
 
+  end subroutine dt_evolve_Runge_Kutta4_icwfn
 
-  contains
-    subroutine calc_velocity_icwfn
-      implicit none
-      integer :: itraj, ispec, ip
+  subroutine calc_velocity_icwfn
+    implicit none
+    integer :: itraj, ispec, ip
 
-      do itraj = ntraj_start, ntraj_end
-        do ispec = 1, num_species
-          do ip = 1, spec(ispec)%nparticle
-
-            call calc_velocity_from_cond_wf(spec(ispec),traj(itraj)%spec(ispec)%zwfn(:,ip), &
-              traj(itraj)%spec(ispec)%r_p(:,ip),traj(itraj)%spec(ispec)%v_pt(:,ip))
-
-          end do
+    do itraj = ntraj_start, ntraj_end
+      do ispec = 1, num_species
+        do ip = 1, spec(ispec)%nparticle
+          
+          call calc_velocity_from_cond_wf(spec(ispec),traj(itraj)%spec(ispec)%zwfn(:,ip), &
+            traj(itraj)%spec(ispec)%r_p(:,ip),traj(itraj)%spec(ispec)%v_p(:,ip))
+          
         end do
       end do
+    end do
 
-    end subroutine calc_velocity_icwfn
+  end subroutine calc_velocity_icwfn
 
-    subroutine calc_veff_icwfn
+  subroutine calc_veff_icwfn
     implicit none
     integer :: itraj, ispec, ip, jspec, jp    
+    integer :: ix
     
     ! calc veff
     do itraj = ntraj_start, ntraj_end
 
-    do ispec = 1, num_species
-      do ip = 1, spec(ispec)%nparticle
-        traj(itraj)%spec(ispec)%veff(:,ip) = spec(ispec)%v0(:)
-        do jspec = 1, num_species
-          do jp = 1, spec(jspec)%nparticle
-            if( ispec == jspec .and. ip == jp)cycle
-            if(ispec == 1 .and. jspec == 1)then
-              do ix = 1, spec(ispec)%ngrid_tot
-                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
-                  + two_body_pot_1(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
-              end do
-            else if(ispec == 2 .and. jspec == 2)then          
-              do ix = 1, spec(ispec)%ngrid_tot
-                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
-                  + two_body_pot_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
-              end do
-            else if(ispec == 1 .and. jspec == 2)then          
-              do ix = 1, spec(ispec)%ngrid_tot
-                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
-                  + two_body_pot_1_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
-              end do
-            else if(ispec == 2 .and. jspec == 1)then          
-              do ix = 1, spec(ispec)%ngrid_tot
-                traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
-                  + two_body_pot_1_2(traj(itraj)%spec(ispec)%r_p(:,jp),spec(ispec)%x(:,ix))
-              end do
-            else
-              stop 'Error!!'
-            end if
+      do ispec = 1, num_species
+        do ip = 1, spec(ispec)%nparticle
+          traj(itraj)%spec(ispec)%veff(:,ip) = spec(ispec)%v0(:)
+          do jspec = 1, num_species
+            do jp = 1, spec(jspec)%nparticle
+              if( ispec == jspec .and. ip == jp)cycle
+              if(ispec == 1 .and. jspec == 1)then
+                do ix = 1, spec(ispec)%ngrid_tot
+                  traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                    + two_body_pot_1(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+                end do
+              else if(ispec == 2 .and. jspec == 2)then          
+                do ix = 1, spec(ispec)%ngrid_tot
+                  traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                    + two_body_pot_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+                end do
+              else if(ispec == 1 .and. jspec == 2)then          
+                do ix = 1, spec(ispec)%ngrid_tot
+                  traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                    + two_body_pot_1_2(spec(ispec)%x(:,ix),traj(itraj)%spec(ispec)%r_p(:,jp))
+                end do
+              else if(ispec == 2 .and. jspec == 1)then          
+                do ix = 1, spec(ispec)%ngrid_tot
+                  traj(itraj)%spec(ispec)%veff(ix,ip) = traj(itraj)%spec(ispec)%veff(ix,ip) &
+                    + two_body_pot_1_2(traj(itraj)%spec(ispec)%r_p(:,jp),spec(ispec)%x(:,ix))
+                end do
+              else
+                stop 'Error!!'
+              end if
+            end do
           end do
         end do
       end do
-    end do
 
     end do
     
   end subroutine calc_veff_icwfn
-
-  end subroutine dt_evolve_Runge_Kutta4_icwfn
 
   subroutine density_output(icount)
     implicit none
@@ -714,7 +716,7 @@ contains
 
     do ispec = 1, num_species
       write(cispec,"(I1.1)")ispec
-      filename = trim(icount)//"spec_"//trim(cispec)//".out"
+      filename = trim(cicount)//"spec_"//trim(cispec)//".out"
       open(30,file=filename)
       do ix = 1, spec(ispec)%ngrid_tot
         write(30,"(999e26.16e3)")spec(ispec)%x(:,ix)&
