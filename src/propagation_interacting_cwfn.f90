@@ -371,12 +371,13 @@ contains
                       call error_finalize(message(1:2))
                     end select
 
+                    zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
+
                   end do
                 end do
               end do
             end do
 
-            zWm_icwf(jtraj,itraj) = ztmp
 
           end do
         end do
