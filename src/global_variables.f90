@@ -19,6 +19,7 @@ module global_variables
 
   integer :: num_total_particle
   integer,allocatable :: itable_particle2species(:)
+  integer,allocatable :: itable_particle2particle(:)
 
   integer :: sampling_method
   integer,parameter :: sampling_from_manybody_wf = 0
@@ -32,6 +33,7 @@ module global_variables
 
   integer,parameter :: NO_PROPAGATION  = -1
   integer,parameter :: HERMITIAN_LIMIT =  1
+  integer,parameter :: INT_CWF         =  2
 
 
 ! temporal

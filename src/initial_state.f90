@@ -3,6 +3,7 @@ subroutine initial_state
   implicit none
 
   call write_message('Start: initial_state')
+  call comm_barrier
 
   select case(sampling_method)
   case(sampling_from_manybody_wf)
@@ -17,7 +18,7 @@ subroutine initial_state
     call error_finalize(message(1))
   end select
 
-
+  call comm_barrier
   call write_message('Finish: initial_state')
 
 end subroutine initial_state
@@ -107,9 +108,9 @@ subroutine init_manybody_wf
   implicit none
 
 ! Shim-Metiu molel
-!  call init_manybody_wf_shin_metiu
+  call init_manybody_wf_shin_metiu
 
 ! e-e scattering problem
-  call init_manybody_wf_ee_scattering
+!  call init_manybody_wf_ee_scattering
 
 end subroutine init_manybody_wf

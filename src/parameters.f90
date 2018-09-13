@@ -4,18 +4,21 @@ subroutine parameters
   integer :: ispec, ip, ipt
 
   call write_message('Start: parameters')
+  call comm_barrier
 
 ! propagation parameters
 !  propagation_method = NO_PROPAGATION
-  propagation_method = HERMITIAN_LIMIT
+!  propagation_method = HERMITIAN_LIMIT
+  propagation_method = INT_CWF
+
   num_trajectory = 4
   time_step = 0.01d0
-  propagation_time = 200d0 !40d0*fs
+  propagation_time = 40d0*fs
   num_time_step = aint(propagation_time/time_step)+1
 
 ! model parameters
-!  call shin_metiu_parameters
-  call ee_scattering_parameters
+  call shin_metiu_parameters
+!  call ee_scattering_parameters
 
 
   num_total_particle = sum(spec(:)%nparticle)
@@ -24,20 +27,21 @@ subroutine parameters
 
 ! table to convert from particle index to species index
   allocate(itable_particle2species(num_total_particle))
+  allocate(itable_particle2particle(num_total_particle))
   
   ip = 0
   do ispec = 1, num_species
     do ipt = 1, spec(ispec)%nparticle
       ip = ip + 1
-      itable_particle2species(ip) = ispec
-      
+      itable_particle2species(ip)  = ispec
+      itable_particle2particle(ip) = ipt
+
     end do
   end do
 
 
-
+  call comm_barrier
   call write_message(message(1))
-
   call write_message('Finish: parameters')
 
 end subroutine parameters

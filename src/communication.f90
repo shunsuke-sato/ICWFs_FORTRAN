@@ -7,7 +7,9 @@ module communication
 
 
   public :: comm_bcast, &
-            comm_allreduce
+            comm_allreduce, &
+            comm_sendrecv, &
+            comm_barrier
 
   interface comm_bcast
     module procedure comm_bcast_integer
@@ -44,6 +46,15 @@ module communication
     module procedure comm_allreduce_complex8_3d
  end interface comm_allreduce
 
+ interface comm_sendrecv
+    module procedure comm_sendrecv_integer
+    module procedure comm_sendrecv_integer_1d
+    module procedure comm_sendrecv_complex8
+    module procedure comm_sendrecv_complex8_1d
+    module procedure comm_sendrecv_complex8_2d
+    module procedure comm_sendrecv_complex8_3d
+ end interface comm_sendrecv
+
 contains
 !-------------------------------------------------------------------------------
   function int_switch(if_true, int_true, int_false) result(int_result)
@@ -59,8 +70,20 @@ contains
    end if
   end function int_switch
 !-------------------------------------------------------------------------------
+
+  subroutine comm_barrier(communicator)
+    integer,intent(in),optional :: communicator
+    integer :: id_comm, ierr
+    id_comm = int_switch(present(communicator), communicator, comm_group_global)
+
+    call mpi_barrier(id_comm, ierr)
+
+  end subroutine comm_barrier
+  
   include "include/comm_bcast.f90"
   include "include/comm_allreduce.f90"
+  include "include/comm_sendrecv.f90"
+
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
