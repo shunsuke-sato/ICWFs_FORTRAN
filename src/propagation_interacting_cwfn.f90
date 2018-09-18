@@ -506,7 +506,7 @@ contains
                 do jspec = 1, num_species
                   do jp = 1, spec(jspec)%nparticle
                     call wavefunction_interpolate(jspec, &
-                      traj(itraj)%spec(ispec)%r_p(:,ip), &
+                      traj(itraj)%spec(jspec)%r_p(:,jp), &
                       spec_buf(jspec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1),&
                       zs_tmp,zv_tmp)
                     
