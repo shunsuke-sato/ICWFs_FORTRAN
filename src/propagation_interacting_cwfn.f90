@@ -498,37 +498,39 @@ contains
 
       if(if_velocity_field_t)then
         do itraj = ntraj_start, ntraj_end
-          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
-            zs = 0d0
-            zv = 0d0
-            do jspec = 1, num_species
-              do jp = 1, spec(jspec)%nparticle
-                call wavefunction_interpolate(jspec, &
-                  traj(jtraj)%spec(jspec)%r_p(:,jp), &
-                  traj(jtraj)%spec(jspec)%zwfn(:,jp), &
-                  zs_tmp,zv_tmp)
-
-                zs = zs * zs_tmp
-                if(ispec == jspec .and. ip == jp)then
-                  zv = zv * zv_tmp
-                else
-                  zv = zv * zs_tmp
-                end if
-
+          do ispec = 1, num_species
+            do ip = 1, spec(ispec)%nparticle
+              do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+                zs = 0d0
+                zv = 0d0
+                do jspec = 1, num_species
+                  do jp = 1, spec(jspec)%nparticle
+                    call wavefunction_interpolate(jspec, &
+                      traj(itraj)%spec(ispec)%r_p(:,ip), &
+                      spec_buf(jspec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1),&
+                      zs_tmp,zv_tmp)
+                    
+                    zs = zs * zs_tmp
+                    if(ispec == jspec .and. ip == jp)then
+                      zv = zv * zv_tmp
+                    else
+                      zv = zv * zs_tmp
+                    end if
+                    
+                  end do
+                end do
+                traj(itraj)%spec(ispec)%zv_p(1,ip) &
+                  = traj(itraj)%spec(ispec)%zv_p(1,ip) &
+                  + zv*zC_icwf(jtraj)
+                traj(itraj)%spec(ispec)%zs_p(1,ip) &
+                  = traj(itraj)%spec(ispec)%zs_p(1,ip) &
+                  + zs*zC_icwf(jtraj)
               end do
             end do
-            traj(itraj)%spec(ispec)%zv_p(1,ip) &
-              = traj(itraj)%spec(ispec)%zv_p(1,ip) &
-              + zv*zC_icwf(jtraj)
-            traj(itraj)%spec(ispec)%zs_p(1,ip) &
-              = traj(itraj)%spec(ispec)%zs_p(1,ip) &
-              + zs*zC_icwf(jtraj)
-
-
           end do
         end do
       end if
-
+      
     end do
 
     if(if_overlap_matrix_t)then
