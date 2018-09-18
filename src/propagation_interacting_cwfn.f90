@@ -501,8 +501,8 @@ contains
           do ispec = 1, num_species
             do ip = 1, spec(ispec)%nparticle
               do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
-                zs = 0d0
-                zv = 0d0
+                zs = 1d0
+                zv = 1d0
                 do jspec = 1, num_species
                   do jp = 1, spec(jspec)%nparticle
                     call wavefunction_interpolate(jspec, &
