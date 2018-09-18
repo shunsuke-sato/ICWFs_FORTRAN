@@ -202,7 +202,7 @@ contains
     integer :: ntraj_s_sbuf, ntraj_e_sbuf
     integer :: ntraj_s_rbuf, ntraj_e_rbuf
     real(8) :: vint_t
-    complex(8) :: ztmp
+    complex(8) :: ztmp, zs
 
     if_overlap_matrix_t      = .false.
     if(present(if_overlap_matrix))     if_overlap_matrix_t = if_overlap_matrix
@@ -301,20 +301,16 @@ contains
                 do jspec = 1, num_species
                   do jp = 1, spec(jspec)%nparticle
                     jp_tot = jp_tot + 1
-                    if(ip_tot <= jp_tot)cycle
+                    if(ip_tot >= jp_tot)cycle
 
                     select case(num_total_particle)
                     case(2)
                       if(ispec == 1 .and. jspec == 1)then
                         ztmp = 0d0
+! two-body interaction
                         do ix1 = 1, spec(ispec)%ngrid_tot
                         do ix2 = 1, spec(jspec)%ngrid_tot
-                          vint_t = two_body_pot_1(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
-                            -two_body_pot_1(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(ispec)%r_p(:,ip))&
-                            -two_body_pot_1(spec(ispec)%x(:,ix1),&
-                            traj(itraj)%spec(jspec)%r_p(:,jp))
-
+                          vint_t = gf_two_body_pot_1(ix1,ix2)
                           ztmp = ztmp & 
                             +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
                             *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
@@ -325,17 +321,53 @@ contains
 
                         end do
                         end do
-                      else if(ispec == 2 .and. jspec == 2)then
-                        ztmp = 0d0
-                        do ix1 = 1, spec(ispec)%ngrid_tot
+
+! subtraction mean-field contribution from j
                         do ix2 = 1, spec(jspec)%ngrid_tot
-                          vint_t = two_body_pot_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
-                            -two_body_pot_2(spec(jspec)%x(:,ix2),&
-                            traj(itraj)%spec(ispec)%r_p(:,ip))&
-                            -two_body_pot_2(spec(ispec)%x(:,ix1),&
+                          vint_t = -two_body_pot_1(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(ispec)%r_p(:,ip))
+
+                          zs = 0d0
+                          do ix1 = 1, spec(ispec)%ngrid_tot
+                            zs = zs + traj(itraj)%spec(ispec)%zwfn(ix1,ip) &
+                              *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
+                          end do
+
+                          ztmp = ztmp & 
+                            +zs &
+                            *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                            *conjg(spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
+                        end do
+
+! subtraction mean-field contribution from i
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                          vint_t = -two_body_pot_1(spec(ispec)%x(:,ix1),&
                             traj(itraj)%spec(jspec)%r_p(:,jp))
 
+                          zs = 0d0
+                          do ix2 = 1, spec(jspec)%ngrid_tot
+                            zs = zs + traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                              *conjg(spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))
+                          end do
 
+
+                          ztmp = ztmp & 
+                            +zs &
+                            *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                            *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
+                        end do
+
+                      else if(ispec == 1 .and. jspec == 2)then
+
+                        ztmp = 0d0
+! two-body interaction
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                        do ix2 = 1, spec(jspec)%ngrid_tot
+                          vint_t = gf_two_body_pot_1_2(ix1,ix2)
                           ztmp = ztmp & 
                             +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
                             *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
@@ -346,27 +378,46 @@ contains
 
                         end do
                         end do
-                      else if((ispec == 1 .and. jspec == 2) &
-                        .or. (ispec == 2 .and. jspec == 1))then
-                        ztmp = 0d0
-                        do ix1 = 1, spec(ispec)%ngrid_tot
-                        do ix2 = 1, spec(jspec)%ngrid_tot
-                      vint_t = two_body_pot_1_2(spec(ispec)%x(:,ix1),spec(jspec)%x(:,ix2))&
-                        -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
-                        traj(itraj)%spec(ispec)%r_p(:,ip))&
-                        -two_body_pot_1_2(spec(ispec)%x(:,ix1),&
-                        traj(itraj)%spec(jspec)%r_p(:,jp))
 
-                      ztmp = ztmp & 
-                        +traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
-                        *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
-                        *conjg(&
-                        spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1)&
-                        *spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
-                        *vint_t
-                      
+! subtraction mean-field contribution from j
+                        do ix2 = 1, spec(jspec)%ngrid_tot
+                          vint_t = -two_body_pot_1_2(spec(jspec)%x(:,ix2),&
+                            traj(itraj)%spec(ispec)%r_p(:,ip))
+
+                          zs = 0d0
+                          do ix1 = 1, spec(ispec)%ngrid_tot
+                            zs = zs + traj(itraj)%spec(ispec)%zwfn(ix1,ip) &
+                              *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
+                          end do
+
+                          ztmp = ztmp & 
+                            +zs &
+                            *traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                            *conjg(spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
                         end do
+
+! subtraction mean-field contribution from i
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                          vint_t = -two_body_pot_1_2(spec(ispec)%x(:,ix1),&
+                            traj(itraj)%spec(jspec)%r_p(:,jp))
+
+                          zs = 0d0
+                          do ix2 = 1, spec(jspec)%ngrid_tot
+                            zs = zs + traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
+                              *conjg(spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))
+                          end do
+
+
+                          ztmp = ztmp & 
+                            +zs &
+                            *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                            *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))&
+                            *vint_t
+
                         end do
+
                       end if
 
                       ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
