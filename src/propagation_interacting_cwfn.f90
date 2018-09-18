@@ -14,6 +14,8 @@ subroutine propagation_interacting_cwfn
      real(8),allocatable :: v_p(:,:) ! Velocity of particle
      real(8),allocatable :: veff(:,:) ! One-body effective potential
      real(8),allocatable :: rho(:,:) ! One-body effective potential
+     complex(8),allocatable :: zv_p(:,:) ! numerator of velocity field
+     complex(8),allocatable :: zs_p(:,:) ! denominator of velocity field
   end type species_icwf
 
 
@@ -76,6 +78,8 @@ contains
         allocate(traj(itraj)%spec(ispec)%zwfn(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
         allocate(traj(itraj)%spec(ispec)%r_p(spec(ispec)%ndim,spec(ispec)%nparticle))
         allocate(traj(itraj)%spec(ispec)%v_p(spec(ispec)%ndim,spec(ispec)%nparticle))
+        allocate(traj(itraj)%spec(ispec)%zv_p(spec(ispec)%ndim,spec(ispec)%nparticle))
+        allocate(traj(itraj)%spec(ispec)%zs_p(spec(ispec)%ndim,spec(ispec)%nparticle))
         allocate(traj(itraj)%spec(ispec)%veff(spec(ispec)%ngrid_tot,spec(ispec)%nparticle))
         
       end do
@@ -181,14 +185,17 @@ contains
 
   subroutine calc_icwf_matrix(if_overlap_matrix, &
                               if_interaction_matrix, &
-                              if_onebody_density)
+                              if_onebody_density, &
+                              if_velocity_field)
     implicit none
     logical,intent(in),optional :: if_overlap_matrix
     logical,intent(in),optional :: if_interaction_matrix
     logical,intent(in),optional :: if_onebody_density
+    logical,intent(in),optional :: if_velocity_field
     logical :: if_overlap_matrix_t
     logical :: if_interaction_matrix_t
     logical :: if_onebody_density_t
+    logical :: if_velocity_field_t
     integer :: icycle, ispec, ip, itraj, jtraj, ip_tot
     integer :: jspec, jp, jp_tot
     integer :: ix1, ix2
@@ -203,6 +210,7 @@ contains
     integer :: ntraj_s_rbuf, ntraj_e_rbuf
     real(8) :: vint_t
     complex(8) :: ztmp, zs
+    complex(8) :: zv, zs_tmp, zv_tmp
 
     if_overlap_matrix_t      = .false.
     if(present(if_overlap_matrix))     if_overlap_matrix_t = if_overlap_matrix
@@ -212,6 +220,9 @@ contains
 
     if_onebody_density_t  = .false.
     if(present(if_onebody_density)) if_onebody_density_t = if_onebody_density
+
+    if_velocity_field_t = .false.
+    if(present(if_velocity_field))if_velocity_field_t = if_velocity_field
 
 
     allocate(spec_buf(num_species))
@@ -236,6 +247,16 @@ contains
         spec_rho(ispec)%rho = 0d0
       end do
     end if
+
+    if(if_velocity_field_t)then
+      do itraj = ntraj_start, ntraj_end
+        do ispec = 1, num_species
+          traj(itraj)%spec(ispec)%zv_p(:,:) = 0d0
+          traj(itraj)%spec(ispec)%zs_p(:,:) = 0d0
+        end do
+      end do
+    end if
+
 
     do icycle = 0,comm_nproc_global-1
       if(icycle == 0)then
@@ -475,6 +496,38 @@ contains
 
       end if
 
+      if(if_velocity_field_t)then
+        do itraj = ntraj_start, ntraj_end
+          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+            zs = 0d0
+            zv = 0d0
+            do jspec = 1, num_species
+              do jp = 1, spec(jspec)%nparticle
+                call wavefunction_interpolate(jspec, &
+                  traj(jtraj)%spec(jspec)%r_p(:,jp), &
+                  traj(jtraj)%spec(jspec)%zwfn(:,jp), &
+                  zs_tmp,zv_tmp)
+
+                zs = zs * zs_tmp
+                if(ispec == jspec .and. ip == jp)then
+                  zv = zv * zv_tmp
+                else
+                  zv = zv * zs_tmp
+                end if
+
+              end do
+            end do
+            traj(itraj)%spec(ispec)%zv_p(1,ip) &
+              = traj(itraj)%spec(ispec)%zv_p(1,ip) &
+              + zv*zC_icwf(jtraj)
+            traj(itraj)%spec(ispec)%zs_p(1,ip) &
+              = traj(itraj)%spec(ispec)%zs_p(1,ip) &
+              + zs*zC_icwf(jtraj)
+
+
+          end do
+        end do
+      end if
 
     end do
 
@@ -493,9 +546,59 @@ contains
       end do
     end if
 
+    if(if_velocity_field_t)then
+      do itraj = ntraj_start, ntraj_end
+        do ispec = 1, num_species
+          traj(itraj)%spec(ispec)%v_p(1,:) &
+          = aimag(traj(itraj)%spec(ispec)%zv_p(1,:)/traj(itraj)%spec(ispec)%zs_p(1,:)) &
+          /spec(ispec)%mass
+        end do
+      end do
+    end if
+
 
   end subroutine calc_icwf_matrix
 
+  subroutine wavefunction_interpolate(ispec,r_p,zwfn_t,zs,zv)
+    implicit none
+    integer,intent(in) :: ispec
+    real(8),intent(in) :: r_p(spec(ispec)%ndim)
+    complex(8),intent(in) :: zwfn_t(1:spec(ispec)%ngrid_tot)
+    complex(8),intent(out) :: zs, zv
+    integer :: ix
+    real(8) :: dx, x0, xx
+    complex(8) :: zf0, zfm1, zfp1
+    complex(8) :: za, zb, zc
+
+    if(spec(ispec)%ndim /= 1)stop 'Error in wavefunction_ingterpolate'
+
+    ix = nint((r_p(1)-spec(ispec)%x_ini(1))/spec(ispec)%dx(1))
+    dx = spec(ispec)%dx(1)
+
+    zf0 = 0d0
+    if(1 <= ix .and. ix <= spec(ispec)%ngrid(1))then
+      zf0 = zwfn_t(ix)
+    end if
+
+    zfp1 = 0d0
+    if(1 <= ix+1 .and. ix+1 <= spec(ispec)%ngrid(1))then
+      zfp1 = zwfn_t(ix+1)
+    end if
+
+    zfm1 = 0d0
+    if(1 <= ix-1 .and. ix-1 <= spec(ispec)%ngrid(1))then
+      zfm1 = zwfn_t(ix-1)
+    end if
+
+    zc = zf0
+    zb = 0.5d0*(zfp1 - zfm1)/dx
+    za = (zfp1 - zb*dx - zc)/dx**2
+    x0 = spec(ispec)%x_ini(1) + dx*ix
+    xx = r_p(1) - x0
+    zs = za*xx**2 + zb*xx + zc
+    zv = 2d0*za*xx + zb
+
+  end subroutine wavefunction_interpolate
 
   subroutine dt_evolve_Runge_Kutta4_icwfn
     implicit none
@@ -533,11 +636,12 @@ contains
 ! RK1 =========================================================================
     irk = 1
     call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
+                              if_interaction_matrix=.true., &
+                              if_velocity_field =.true.)
     call pseudo_inverse(zMm_icwf,zMm_pinv)
     zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
 
-    call calc_velocity_icwfn
+!    call calc_velocity_icwfn
     call calc_veff_icwfn
 
     do itraj = ntraj_start, ntraj_end
@@ -576,11 +680,12 @@ contains
     end do
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
+                              if_interaction_matrix=.true., &
+                              if_velocity_field =.true.)
     call pseudo_inverse(zMm_icwf,zMm_pinv)
     zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
 
-    call calc_velocity_icwfn
+!    call calc_velocity_icwfn
     call calc_veff_icwfn
 
     do itraj = ntraj_start, ntraj_end
@@ -618,11 +723,12 @@ contains
     end do
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
+                              if_interaction_matrix=.true., &
+                              if_velocity_field =.true.)
     call pseudo_inverse(zMm_icwf,zMm_pinv)
     zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
 
-    call calc_velocity_icwfn
+!    call calc_velocity_icwfn
     call calc_veff_icwfn
 
     do itraj = ntraj_start, ntraj_end
@@ -660,11 +766,12 @@ contains
     end do
 
     call calc_icwf_matrix(if_overlap_matrix=.true., &
-                              if_interaction_matrix=.true.)
+                              if_interaction_matrix=.true., &
+                              if_velocity_field =.true.)
     call pseudo_inverse(zMm_icwf,zMm_pinv)
     zC_rk(:,irk) = -zI* matmul( zMm_pinv, matmul(zWm_icwf, zC_icwf))
 
-    call calc_velocity_icwfn
+!    call calc_velocity_icwfn
     call calc_veff_icwfn
 
     do itraj = ntraj_start, ntraj_end
