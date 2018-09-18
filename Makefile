@@ -1,5 +1,6 @@
 FC = mpif90 -O2 ## gfotran
 #FC = mpif90 -O0 -fbounds-check ## gfotran
+#FC = mpif90 -O2 -pg ## gfotran
 
 LN = -llapack -lblas
 
