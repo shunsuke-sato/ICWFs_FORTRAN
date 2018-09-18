@@ -20,6 +20,7 @@ subroutine parameters
   call shin_metiu_parameters
 !  call ee_scattering_parameters
 
+  call init_interaction(spec, num_species)
 
   num_total_particle = sum(spec(:)%nparticle)
   write(message(1),"(I7)")num_total_particle
