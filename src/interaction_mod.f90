@@ -3,6 +3,7 @@
 !-----------------------------------------------------------------------------------------
 module interaction_mod
   use math_mod
+  use species
   implicit none
   private
 
@@ -12,14 +13,71 @@ module interaction_mod
   real(8),parameter :: Rl = 4.0d0
   real(8),parameter :: Rr = 3.1d0
 
-  public :: one_body_pot_1, &
+  public :: init_interaction, &
+            one_body_pot_1, &
             one_body_pot_2, &
             two_body_pot_1, &
             two_body_pot_2, &
             two_body_pot_1_2
 
+  real(8),public,allocatable :: gf_two_body_pot_1(:,:)
+  real(8),public,allocatable :: gf_two_body_pot_2(:,:)
+  real(8),public,allocatable :: gf_two_body_pot_1_2(:,:)
+
 
 contains
+  subroutine init_interaction(spec, num_species)
+    implicit none
+    type(species_t),intent(in) :: spec(num_species)
+    integer,intent(in) :: num_species
+    integer :: nspec, ispec, jspec
+    integer :: ngrid_i, ngrid_j
+    integer :: ix, jx
+
+    nspec = num_species
+
+
+    do ispec = 1, nspec
+      ngrid_i = spec(ispec)%ngrid_tot
+      if(spec(ispec)%nparticle >1)then
+        if(ispec == 1)then
+          allocate(gf_two_body_pot_1(ngrid_i,ngrid_i))
+          do ix = 1,ngrid_i
+            do jx = 1,ngrid_i
+              gf_two_body_pot_1(ix,jx) &
+                = two_body_pot_1(spec(ispec)%x(:,ix),spec(ispec)%x(:,jx))
+            end do
+          end do
+            
+        else if(ispec == 2)then
+          allocate(gf_two_body_pot_2(ngrid_i,ngrid_i))
+          do ix = 1,ngrid_i
+            do jx = 1,ngrid_i
+              gf_two_body_pot_2(ix,jx) &
+                = two_body_pot_2(spec(ispec)%x(:,ix),spec(ispec)%x(:,jx))
+            end do
+          end do
+        else
+          stop 'Error: in init_interaction; num_species>2.'
+        end if
+      end if
+
+      do jspec = ispec+1, nspec
+        ngrid_j = spec(jspec)%ngrid_tot
+        if(ispec == 1 .and. jspec == 2)then
+          allocate(gf_two_body_pot_1_2(ngrid_i,ngrid_j))
+          do ix = 1,ngrid_i
+            do jx = 1,ngrid_j
+              gf_two_body_pot_1_2(ix,jx) &
+                = two_body_pot_1_2(spec(ispec)%x(:,ix),spec(jspec)%x(:,jx))
+            end do
+          end do
+        end if
+      end do
+    end do
+
+  end subroutine init_interaction
+!--------------------------------------------------------------------------------
   function one_body_pot_1(x) result(pot)
     implicit none
     integer,parameter :: ndim = 1
