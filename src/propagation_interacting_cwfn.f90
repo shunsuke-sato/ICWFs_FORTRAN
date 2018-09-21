@@ -211,6 +211,10 @@ contains
     real(8) :: vint_t
     complex(8) :: ztmp, zs
     complex(8) :: zv, zs_tmp, zv_tmp
+    integer :: nmat_max
+    complex(8),allocatable :: zvec_tmp(:)
+    real(8),allocatable :: vector_tmp_r(:),vector_tmp_i(:)
+
 
     if_overlap_matrix_t      = .false.
     if(present(if_overlap_matrix))     if_overlap_matrix_t = if_overlap_matrix
@@ -240,6 +244,11 @@ contains
 
     if(if_interaction_matrix_t)then
       zWm_icwf = 0d0
+      nmat_max = spec(1)%ngrid_tot
+      do ispec = 2, num_species
+        if(nmat_max < spec(ispec)%ngrid_tot) nmat_max = spec(ispec)%ngrid_tot
+      end do
+      allocate(zvec_tmp(nmat_max), vector_tmp_r(nmat_max), vector_tmp_i(nmat_max))
     end if
 
     if(if_onebody_density_t)then
