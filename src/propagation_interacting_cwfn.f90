@@ -214,6 +214,7 @@ contains
     integer :: nmat_max
     complex(8),allocatable :: zvec_tmp(:)
     real(8),allocatable :: vector_tmp_r(:),vector_tmp_i(:)
+    real(8),allocatable :: vector2_tmp_r(:),vector2_tmp_i(:)
 
 
     if_overlap_matrix_t      = .false.
@@ -249,6 +250,7 @@ contains
         if(nmat_max < spec(ispec)%ngrid_tot) nmat_max = spec(ispec)%ngrid_tot
       end do
       allocate(zvec_tmp(nmat_max), vector_tmp_r(nmat_max), vector_tmp_i(nmat_max))
+      allocate(vector2_tmp_r(nmat_max), vector2_tmp_i(nmat_max))
     end if
 
     if(if_onebody_density_t)then
@@ -391,16 +393,39 @@ contains
 
                         ztmp = 0d0
 ! two-body interaction
-                        do ix2 = 1, spec(jspec)%ngrid_tot
-                          zs = traj(itraj)%spec(jspec)%zwfn(ix2,jp)&
-                            *conjg(spec_buf(jspec)%zwfn_rbuf(ix2,jp,jtraj-ntraj_s_rbuf+1))
+                        zvec_tmp(1:spec(jspec)%ngrid_tot) = &
+                          traj(itraj)%spec(jspec)%zwfn(1:spec(jspec)%ngrid_tot,jp)&
+                         *conjg(spec_buf(jspec)%zwfn_rbuf(1:spec(jspec)%ngrid_tot,jp,jtraj-ntraj_s_rbuf+1))
 
-                          do ix1 = 1, spec(ispec)%ngrid_tot
-                            ztmp = ztmp + gf_two_body_pot_1_2(ix1,ix2)*zs&
-                              *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
-                              *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
-                          end do
+                        vector_tmp_r(1:spec(jspec)%ngrid_tot) = &
+                          & real(zvec_tmp(1:spec(jspec)%ngrid_tot))
+                        vector_tmp_i(1:spec(jspec)%ngrid_tot) = &
+                          & aimag(zvec_tmp(1:spec(jspec)%ngrid_tot))
+                        
+                        call dgemv('n',&
+                                   spec(ispec)%ngrid_tot,&
+                                   spec(jspec)%ngrid_tot, 1d0, &
+                                   gf_two_body_pot_1_2, &
+                                   spec(ispec)%ngrid_tot,&
+                                   vector_tmp_r(1:spec(jspec)%ngrid_tot), 1, 0d0, &
+                                   vector2_tmp_r(1:spec(ispec)%ngrid_tot), 1)
+                        call dgemv('n',&
+                                   spec(ispec)%ngrid_tot,&
+                                   spec(jspec)%ngrid_tot, 1d0, &
+                                   gf_two_body_pot_1_2, &
+                                   spec(ispec)%ngrid_tot,&
+                                   vector_tmp_i(1:spec(jspec)%ngrid_tot), 1, 0d0, &
+                                   vector2_tmp_i(1:spec(ispec)%ngrid_tot), 1)
+                        zvec_tmp(1:spec(ispec)%ngrid_tot) = &
+                          vector2_tmp_r(1:spec(ispec)%ngrid_tot) &
+                      +zI*vector2_tmp_i(1:spec(ispec)%ngrid_tot) 
+                        
+                        do ix1 = 1, spec(ispec)%ngrid_tot
+                          ztmp = ztmp + zvec_tmp(ix1) &
+                            *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                            *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
                         end do
+
 
 ! subtraction mean-field contribution from j
                         zs = 0d0
