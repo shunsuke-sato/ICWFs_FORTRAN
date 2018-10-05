@@ -312,10 +312,9 @@ contains
                   zMm_sub_icwf(jtraj,itraj,ip_tot) = ztmp
                 end do
               else
-!                do ip = 1, spec(ispec)%nparticle ! = 2
                 ip = 1
                 ip_tot = ip_tot + 1
-                  
+                 
                 ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip) &
                   *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
                   *spec(ispec)%dV
@@ -326,7 +325,7 @@ contains
 
                 zMm_sub_icwf(jtraj,itraj,ip_tot) = 2d0*ztmp
 
-                ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip+1) &
+               ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip+1) &
                   *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
                   *spec(ispec)%dV
 
@@ -346,17 +345,23 @@ contains
             zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
 
           end do
-
         end do
       end if
 
       if(if_interaction_matrix_t)then
         do itraj = ntraj_start, ntraj_end
           do ispec = 1, num_species
-            do jspec = ispec, num_species
+            do jspec = 1, num_species
               if(.not.(if_symmetric_ansatz .and. ispec == jspec) )then
                 do ip = 1, spec(ispec)%nparticle
-                  do jp = 1, spec(ispec)%nparticle
+                  do jp = 1, spec(jspec)%nparticle
+!                    if(ip == jp .and. ispec == jspec)cycle
+!                    if(jp_tot <= ip_tot)cycle
+                    if(jspec < ispec)then
+                      cycle
+                    else if(ispec == jspec)then
+                      if(jp <= ip)cycle
+                    end if
 
 
                     do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
@@ -365,7 +370,7 @@ contains
                         *conjg(spec_buf(jspec)%zwfn_rbuf(1:spec(jspec)%ngrid_tot,jp,jtraj-ntraj_s_rbuf+1))
                       vector_tmp1(1:spec(jspec)%ngrid_tot,2*(jtraj-ntraj_s_rbuf)+1) &
                         = real(zvec_tmp(1:spec(jspec)%ngrid_tot))
-                      vector_tmp2(1:spec(jspec)%ngrid_tot,2*(jtraj-ntraj_s_rbuf)+2) &
+                      vector_tmp1(1:spec(jspec)%ngrid_tot,2*(jtraj-ntraj_s_rbuf)+2) &
                         = aimag(zvec_tmp(1:spec(jspec)%ngrid_tot))
 
                     end do
@@ -409,7 +414,6 @@ contains
                       ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
                       zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
                     end do
-
 
 
                     if(ispec == 1 .and. jspec == 1)then
@@ -456,7 +460,6 @@ contains
                         ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
                         zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
                       end do
-
 
                     else if(ispec == 1 .and. jspec == 2)then
                       do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
