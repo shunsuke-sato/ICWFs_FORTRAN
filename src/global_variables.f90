@@ -40,4 +40,7 @@ module global_variables
   complex(8),allocatable :: zwfn_ini_2p(:,:),zwfn_ini_3p(:,:,:)
   real(8),allocatable :: rho_cumulative_prob(:)
 
+
+  logical,parameter :: if_symmetric_ansatz = .true.
+
 end module global_variables

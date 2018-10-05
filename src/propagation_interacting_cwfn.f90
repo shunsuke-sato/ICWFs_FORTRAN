@@ -211,10 +211,9 @@ contains
     real(8) :: vint_t
     complex(8) :: ztmp, zs
     complex(8) :: zv, zs_tmp, zv_tmp
-    integer :: nmat_max
+    integer :: nmat_max, num_vec
     complex(8),allocatable :: zvec_tmp(:)
-    real(8),allocatable :: vector_tmp_r(:),vector_tmp_i(:)
-    real(8),allocatable :: vector2_tmp_r(:),vector2_tmp_i(:)
+    real(8),allocatable :: vector_tmp1(:,:),vector_tmp2(:,:)
 
 
     if_overlap_matrix_t      = .false.
@@ -249,8 +248,7 @@ contains
       do ispec = 2, num_species
         if(nmat_max < spec(ispec)%ngrid_tot) nmat_max = spec(ispec)%ngrid_tot
       end do
-      allocate(zvec_tmp(nmat_max), vector_tmp_r(nmat_max), vector_tmp_i(nmat_max))
-      allocate(vector2_tmp_r(nmat_max), vector2_tmp_i(nmat_max))
+      allocate(vector_tmp1(nmat_max,ntraj_size),vector_tmp2(nmat_max,ntraj_size))
     end if
 
     if(if_onebody_density_t)then
@@ -304,76 +302,118 @@ contains
 
             ip_tot = 0
             do ispec = 1, num_species
-              do ip = 1, spec(ispec)%nparticle
+              if(.not. (spec(ispec)%nparticle == 2 .and. if_symmetric_ansatz))then
+                do ip = 1, spec(ispec)%nparticle
+                  ip_tot = ip_tot + 1
+                  ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip) &
+                    *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
+                    *spec(ispec)%dV
+                  zMm_sub_icwf(jtraj,itraj,ip_tot) = ztmp
+                end do
+              else
+!                do ip = 1, spec(ispec)%nparticle ! = 2
+                ip = 1
                 ip_tot = ip_tot + 1
+                  
                 ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip) &
                   *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
                   *spec(ispec)%dV
-                zMm_sub_icwf(jtraj,itraj,ip_tot) = ztmp
- !               zMm_sub_icwf(jtraj,itraj,ip_tot) = conjg(ztmp)
-              end do
-            end do
-            zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
-!            zMm_icwf(jtraj,itraj) = conjg(zMm_icwf(itraj,jtraj))
 
+                ztmp = ztmp*sum(traj(itraj)%spec(ispec)%zwfn(:,ip+1) &
+                  *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip+1,jtraj-ntraj_s_rbuf+1))) &
+                  *spec(ispec)%dV
+
+                zMm_sub_icwf(jtraj,itraj,ip_tot) = 2d0*ztmp
+
+                ztmp = sum(traj(itraj)%spec(ispec)%zwfn(:,ip+1) &
+                  *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))) &
+                  *spec(ispec)%dV
+
+                ztmp = ztmp*sum(traj(itraj)%spec(ispec)%zwfn(:,ip) &
+                  *conjg(spec_buf(ispec)%zwfn_rbuf(:,ip+1,jtraj-ntraj_s_rbuf+1))) &
+                  *spec(ispec)%dV
+
+                zMm_sub_icwf(jtraj,itraj,ip_tot) = zMm_sub_icwf(jtraj,itraj,ip_tot) &
+                  + 2d0*ztmp
+
+                ip_tot = ip_tot + 1
+                zMm_sub_icwf(jtraj,itraj,ip_tot) = 1d0
+
+              end if
+
+            end do
           end do
+          zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
         end do
       end if
 
       if(if_interaction_matrix_t)then
         do itraj = ntraj_start, ntraj_end
-          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+          do ispec = 1, num_species
+            do jspec = ispec, num_species
+              if(.not.(if_symmetric_ansatz .and. ispec == jspec) )then
+                do ip = 1, spec(ispec)%nparticle
+                  do jp = 1, spec(ispec)%nparticle
 
-            ip_tot = 0
-            do ispec = 1, num_species
-              do ip = 1, spec(ispec)%nparticle
-                ip_tot = ip_tot + 1
 
-                jp_tot = 0
-                do jspec = 1, num_species
-                  do jp = 1, spec(jspec)%nparticle
-                    jp_tot = jp_tot + 1
-                    if(ip_tot >= jp_tot)cycle
+                    do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+                      zvec_tmp(1:spec(jspec)%ngrid_tot) = &
+                        traj(itraj)%spec(jspec)%zwfn(1:spec(jspec)%ngrid_tot,jp)&
+                        *conjg(spec_buf(jspec)%zwfn_rbuf(1:spec(jspec)%ngrid_tot,jp,jtraj-ntraj_s_rbuf+1))
+                      vector_tmp1(1:spec(jspec)%ngrid_tot,2*(jtraj-ntraj_s_rbuf)+1) &
+                        = real(zvec_tmp(1:spec(jspec)%ngrid_tot))
+                      vector_tmp2(1:spec(jspec)%ngrid_tot,2*(jtraj-ntraj_s_rbuf)+2) &
+                        = aimag(zvec_tmp(1:spec(jspec)%ngrid_tot))
 
-                    select case(num_total_particle)
-                    case(2)
-                      if(ispec == 1 .and. jspec == 1)then
-                        ztmp = 0d0
-! two-body interaction
-                        zvec_tmp(1:spec(jspec)%ngrid_tot) = &
-                          traj(itraj)%spec(jspec)%zwfn(1:spec(jspec)%ngrid_tot,jp)&
-                         *conjg(spec_buf(jspec)%zwfn_rbuf(1:spec(jspec)%ngrid_tot,jp,jtraj-ntraj_s_rbuf+1))
+                    end do
+                    num_vec = 2*(ntraj_e_rbuf -  ntraj_s_rbuf+1) 
 
-                        vector_tmp_r(1:spec(jspec)%ngrid_tot) = &
-                          & real(zvec_tmp(1:spec(jspec)%ngrid_tot))
-                        vector_tmp_i(1:spec(jspec)%ngrid_tot) = &
-                          & aimag(zvec_tmp(1:spec(jspec)%ngrid_tot))
-                        
-                        call dsymv('u',&                          
-                                   spec(ispec)%ngrid_tot, 1d0, &
-                                   gf_two_body_pot_1, &
-                                   spec(ispec)%ngrid_tot,&
-                                   vector_tmp_r(1:spec(jspec)%ngrid_tot), 1, 0d0, &
-                                   vector2_tmp_r(1:spec(ispec)%ngrid_tot), 1)
+                    if(ispec == 1 .and. jspec == 2)then
+                      call dgemm('n', 'n', &
+                        spec(ispec)%ngrid_tot,&
+                        num_vec, &
+                        spec(jspec)%ngrid_tot, 1d0, &
+                        gf_two_body_pot_1_2, &
+                        spec(ispec)%ngrid_tot,&
+                        vector_tmp1(1:spec(jspec)%ngrid_tot,1:num_vec),&
+                        spec(jspec)%ngrid_tot, 0d0,&
+                        vector_tmp2(1:spec(ispec)%ngrid_tot,1:num_vec),&
+                        spec(ispec)%ngrid_tot)
+                    else if(ispec == 1 .and. jspec == 1)then
+                      call dgemm('n', 'n', &
+                        spec(ispec)%ngrid_tot,&
+                        num_vec, &
+                        spec(jspec)%ngrid_tot, 1d0, &
+                        gf_two_body_pot_1, &
+                        spec(ispec)%ngrid_tot,&
+                        vector_tmp1(1:spec(jspec)%ngrid_tot,1:num_vec),&
+                        spec(jspec)%ngrid_tot, 0d0,&
+                        vector_tmp2(1:spec(ispec)%ngrid_tot,1:num_vec),&
+                        spec(ispec)%ngrid_tot)
+                    else
+                      stop 'error' 
+                    end if
 
-                        call dsymv('u',&                          
-                                   spec(ispec)%ngrid_tot, 1d0, &
-                                   gf_two_body_pot_1, &
-                                   spec(ispec)%ngrid_tot,&
-                                   vector_tmp_i(1:spec(jspec)%ngrid_tot), 1, 0d0, &
-                                   vector2_tmp_i(1:spec(ispec)%ngrid_tot), 1)
 
-                        zvec_tmp(1:spec(ispec)%ngrid_tot) = &
-                          vector2_tmp_r(1:spec(ispec)%ngrid_tot) &
-                      +zI*vector2_tmp_i(1:spec(ispec)%ngrid_tot) 
-                        
-                        do ix1 = 1, spec(ispec)%ngrid_tot
-                          ztmp = ztmp + zvec_tmp(ix1) &
-                            *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
-                            *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
-                        end do
+                    do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+                      ztmp = 0d0
+                      do ix1 = 1, spec(ispec)%ngrid_tot
+                        ztmp = ztmp + (vector_tmp2(ix1,2*(jtraj-ntraj_s_rbuf)+1) &
+                          +zI*vector_tmp2(ix1,2*(jtraj-ntraj_s_rbuf)+2)) &
+                          *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
+                          *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
+                      end do
+                      ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
+                      zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
+                    end do
 
+
+
+                    if(ispec == 1 .and. jspec == 1)then
+
+                      do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
 ! subtraction mean-field contribution from j
+                        ztmp = 0d0
                         zs = 0d0
                         do ix1 = 1, spec(ispec)%ngrid_tot
                           zs = zs + traj(itraj)%spec(ispec)%zwfn(ix1,ip) &
@@ -410,46 +450,15 @@ contains
                             *vint_t
 
                         end do
-
-                      else if(ispec == 1 .and. jspec == 2)then
-
-                        ztmp = 0d0
-! two-body interaction
-                        zvec_tmp(1:spec(jspec)%ngrid_tot) = &
-                          traj(itraj)%spec(jspec)%zwfn(1:spec(jspec)%ngrid_tot,jp)&
-                         *conjg(spec_buf(jspec)%zwfn_rbuf(1:spec(jspec)%ngrid_tot,jp,jtraj-ntraj_s_rbuf+1))
-
-                        vector_tmp_r(1:spec(jspec)%ngrid_tot) = &
-                          & real(zvec_tmp(1:spec(jspec)%ngrid_tot))
-                        vector_tmp_i(1:spec(jspec)%ngrid_tot) = &
-                          & aimag(zvec_tmp(1:spec(jspec)%ngrid_tot))
-                        
-                        call dgemv('n',&
-                                   spec(ispec)%ngrid_tot,&
-                                   spec(jspec)%ngrid_tot, 1d0, &
-                                   gf_two_body_pot_1_2, &
-                                   spec(ispec)%ngrid_tot,&
-                                   vector_tmp_r(1:spec(jspec)%ngrid_tot), 1, 0d0, &
-                                   vector2_tmp_r(1:spec(ispec)%ngrid_tot), 1)
-                        call dgemv('n',&
-                                   spec(ispec)%ngrid_tot,&
-                                   spec(jspec)%ngrid_tot, 1d0, &
-                                   gf_two_body_pot_1_2, &
-                                   spec(ispec)%ngrid_tot,&
-                                   vector_tmp_i(1:spec(jspec)%ngrid_tot), 1, 0d0, &
-                                   vector2_tmp_i(1:spec(ispec)%ngrid_tot), 1)
-                        zvec_tmp(1:spec(ispec)%ngrid_tot) = &
-                          vector2_tmp_r(1:spec(ispec)%ngrid_tot) &
-                      +zI*vector2_tmp_i(1:spec(ispec)%ngrid_tot) 
-                        
-                        do ix1 = 1, spec(ispec)%ngrid_tot
-                          ztmp = ztmp + zvec_tmp(ix1) &
-                            *traj(itraj)%spec(ispec)%zwfn(ix1,ip)&
-                            *conjg(spec_buf(ispec)%zwfn_rbuf(ix1,ip,jtraj-ntraj_s_rbuf+1))
-                        end do
+                        ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
+                        zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
+                      end do
 
 
+                    else if(ispec == 1 .and. jspec == 2)then
+                      do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
 ! subtraction mean-field contribution from j
+                        ztmp = 0d0
                         zs = 0d0
                         do ix1 = 1, spec(ispec)%ngrid_tot
                           zs = zs + traj(itraj)%spec(ispec)%zwfn(ix1,ip) &
@@ -486,25 +495,20 @@ contains
                             *vint_t
 
                         end do
+                        ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
+                        zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
 
-                      end if
-
-                      ztmp = ztmp*spec(ispec)%dV*spec(jspec)%dV
-                    case default
-                      write(message(2),"(I7)")num_total_particle
-                      message(1) = 'Fatal Error: calc_icwf_matrix is not implemented for'
-                      message(2) = '           : num_total_particle = '//trim(message(2))
-                      call error_finalize(message(1:2))
-                    end select
-
-                    zWm_icwf(jtraj,itraj) = zWm_icwf(jtraj,itraj) + ztmp
+                      end do
+                    else
+                      stop 'error!!'
+                    end if
 
                   end do
                 end do
-              end do
+              else
+                stop 'error at the moment'
+              end if
             end do
-
-
           end do
         end do
       end if
