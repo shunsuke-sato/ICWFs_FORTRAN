@@ -226,6 +226,8 @@ contains
     real(8) :: vint_t
     complex(8) :: ztmp, zs
     complex(8) :: zv, zs_tmp, zv_tmp
+    complex(8) :: zs_tmp2, zv_tmp2
+
     integer :: nmat_max, num_vec
     complex(8),allocatable :: zvec_tmp(:)
     real(8),allocatable :: vector_tmp1(:,:),vector_tmp2(:,:)
@@ -704,7 +706,7 @@ contains
 
       end if
 
-      if(if_velocity_field_t)then
+      if(if_velocity_field_t .and. .not.if_symmetric_ansatz)then
         do itraj = ntraj_start, ntraj_end
           do ispec = 1, num_species
             do ip = 1, spec(ispec)%nparticle
@@ -727,6 +729,49 @@ contains
                     
                   end do
                 end do
+                traj(itraj)%spec(ispec)%zv_p(1,ip) &
+                  = traj(itraj)%spec(ispec)%zv_p(1,ip) &
+                  + zv*zC_icwf(jtraj)
+                traj(itraj)%spec(ispec)%zs_p(1,ip) &
+                  = traj(itraj)%spec(ispec)%zs_p(1,ip) &
+                  + zs*zC_icwf(jtraj)
+              end do
+            end do
+          end do
+        end do
+        else if(if_velocity_field_t .and. if_symmetric_ansatz)then
+        do itraj = ntraj_start, ntraj_end
+          do ispec = 1, num_species
+            do ip = 1, spec(ispec)%nparticle
+              do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
+                jp = ip +1
+                if(jp >=3)jp = jp -2
+
+                jspec = ispec
+                call wavefunction_interpolate(jspec, &
+                      traj(itraj)%spec(jspec)%r_p(:,ip), &
+                      spec_buf(jspec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1),&
+                      zs_tmp,zv_tmp)
+                call wavefunction_interpolate(jspec, &
+                      traj(itraj)%spec(jspec)%r_p(:,jp), &
+                      spec_buf(jspec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1),&
+                      zs_tmp2,zv_tmp2)
+
+                zs = zs_tmp*zs_tmp2
+                zv = zv_tmp*zs_tmp2
+                    
+                call wavefunction_interpolate(jspec, &
+                      traj(itraj)%spec(jspec)%r_p(:,ip), &
+                      spec_buf(jspec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1),&
+                      zs_tmp,zv_tmp)
+                call wavefunction_interpolate(jspec, &
+                      traj(itraj)%spec(jspec)%r_p(:,jp), &
+                      spec_buf(jspec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1),&
+                      zs_tmp2,zv_tmp2)
+
+                zs = zs + zs_tmp*zs_tmp2
+                zv = zv + zv_tmp*zs_tmp2
+
                 traj(itraj)%spec(ispec)%zv_p(1,ip) &
                   = traj(itraj)%spec(ispec)%zv_p(1,ip) &
                   + zv*zC_icwf(jtraj)
