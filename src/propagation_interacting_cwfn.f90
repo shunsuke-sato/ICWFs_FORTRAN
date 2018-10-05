@@ -146,16 +146,31 @@ contains
 
         do itraj = ntraj_start, ntraj_end
 
-          ztmp = 0d0
-          do ix1 =1 , spec(ispec_p(1))%ngrid_tot
-            do ix2 =1 , spec(ispec_p(2))%ngrid_tot
-              ztmp = ztmp + conjg(&
-                traj(itraj)%spec(ispec_p(1))%zwfn(ix1,ip_p(1)) &
-               *traj(itraj)%spec(ispec_p(2))%zwfn(ix2,ip_p(2)) &
-                )*zwfn_ini_2p(ix1,ix2)
+          if(.not.if_symmetric_ansatz)then
+            ztmp = 0d0
+            do ix1 =1 , spec(ispec_p(1))%ngrid_tot
+              do ix2 =1 , spec(ispec_p(2))%ngrid_tot
+                ztmp = ztmp + conjg(&
+                  traj(itraj)%spec(ispec_p(1))%zwfn(ix1,ip_p(1)) &
+                  *traj(itraj)%spec(ispec_p(2))%zwfn(ix2,ip_p(2)) &
+                  )*zwfn_ini_2p(ix1,ix2)
+              end do
             end do
-          end do
-          ztmp = ztmp * spec(ispec_p(1))%dV* spec(ispec_p(2))%dV
+            ztmp = ztmp * spec(ispec_p(1))%dV* spec(ispec_p(2))%dV
+          else if(if_symmetric_ansatz)then
+            ztmp = 0d0
+            do ix1 =1 , spec(ispec_p(1))%ngrid_tot
+              do ix2 =1 , spec(ispec_p(2))%ngrid_tot
+                ztmp = ztmp + conjg(&
+                  traj(itraj)%spec(ispec_p(1))%zwfn(ix1,ip_p(1)) &
+                  *traj(itraj)%spec(ispec_p(2))%zwfn(ix2,ip_p(2)) &
+                  +traj(itraj)%spec(ispec_p(1))%zwfn(ix2,ip_p(1)) &
+                  *traj(itraj)%spec(ispec_p(2))%zwfn(ix1,ip_p(2)) &
+                  )*zwfn_ini_2p(ix1,ix2)
+              end do
+            end do
+            ztmp = ztmp * spec(ispec_p(1))%dV* spec(ispec_p(2))%dV
+          end if
 
           zbvec(itraj) = ztmp
 
