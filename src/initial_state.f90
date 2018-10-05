@@ -108,9 +108,9 @@ subroutine init_manybody_wf
   implicit none
 
 ! Shim-Metiu molel
-  call init_manybody_wf_shin_metiu
+!  call init_manybody_wf_shin_metiu
 
 ! e-e scattering problem
-!  call init_manybody_wf_ee_scattering
+  call init_manybody_wf_ee_scattering
 
 end subroutine init_manybody_wf
