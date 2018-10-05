@@ -248,7 +248,8 @@ contains
       do ispec = 2, num_species
         if(nmat_max < spec(ispec)%ngrid_tot) nmat_max = spec(ispec)%ngrid_tot
       end do
-      allocate(vector_tmp1(nmat_max,ntraj_size),vector_tmp2(nmat_max,ntraj_size))
+      allocate(zvec_tmp(nmat_max))
+      allocate(vector_tmp1(nmat_max,2*ntraj_size),vector_tmp2(nmat_max,2*ntraj_size))
     end if
 
     if(if_onebody_density_t)then
@@ -340,10 +341,12 @@ contains
                 zMm_sub_icwf(jtraj,itraj,ip_tot) = 1d0
 
               end if
-
             end do
+
+            zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
+
           end do
-          zMm_icwf(jtraj,itraj) = product(zMm_sub_icwf(jtraj,itraj,:))
+
         end do
       end if
 
