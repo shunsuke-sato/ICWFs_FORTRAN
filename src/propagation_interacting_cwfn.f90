@@ -671,8 +671,7 @@ contains
 
       end if
       
-      if(if_onebody_density_t)then
-
+      if(if_onebody_density_t .and. .not.if_symmetric_ansatz)then
         do itraj = ntraj_start, ntraj_end
           do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
 
@@ -691,19 +690,74 @@ contains
                     end if
                   end do
                 end do
-
+                
                 spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
                   +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
                   *conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
                   *traj(itraj)%spec(ispec)%zwfn(:,ip)
-
+                
               end do
             end do
           end do
         end do
+      else if(if_onebody_density_t .and. if_symmetric_ansatz)then
 
+        do itraj = ntraj_start, ntraj_end
+          do jtraj = ntraj_s_rbuf, ntraj_e_rbuf
 
+            ip = 1
+            jp = 2
+            ispec = 1
+            jspec = 1
+
+! (1,1)
+            ztmp = sum(conjg(&
+                  spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
+                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV*spec(ispec)%dV
+
+            spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
+              +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+              *conjg(&
+              spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
+              *traj(itraj)%spec(ispec)%zwfn(:,ip)
+
+! (1,2)
+            ztmp = sum(conjg(&
+                  spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
+                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV*spec(ispec)%dV
+
+            spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
+              +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+              *conjg(&
+              spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
+              *traj(itraj)%spec(ispec)%zwfn(:,jp)
+
+! (2,1)
+            ztmp = sum(conjg(&
+                  spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
+                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV*spec(ispec)%dV
+
+            spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
+              +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+              *conjg(&
+              spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
+              *traj(itraj)%spec(ispec)%zwfn(:,ip)
+
+! (2,2)
+            ztmp = sum(conjg(&
+                  spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
+                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV*spec(ispec)%dV
+
+            spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
+              +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
+              *conjg(&
+              spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
+              *traj(itraj)%spec(ispec)%zwfn(:,jp)
+
+                
+          end do
+        end do
       end if
 
       if(if_velocity_field_t .and. .not.if_symmetric_ansatz)then
