@@ -714,7 +714,7 @@ contains
 ! (1,1)
             ztmp = sum(conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
-                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV*spec(ispec)%dV
+                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV
 
             spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
               +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
@@ -725,7 +725,7 @@ contains
 ! (1,2)
             ztmp = sum(conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,jp,jtraj-ntraj_s_rbuf+1))&
-                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV*spec(ispec)%dV
+                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV
 
             spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
               +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
@@ -736,7 +736,7 @@ contains
 ! (2,1)
             ztmp = sum(conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
-                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV*spec(ispec)%dV
+                  *traj(itraj)%spec(ispec)%zwfn(:,jp))*spec(ispec)%dV
 
             spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
               +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
@@ -747,7 +747,7 @@ contains
 ! (2,2)
             ztmp = sum(conjg(&
                   spec_buf(ispec)%zwfn_rbuf(:,ip,jtraj-ntraj_s_rbuf+1))&
-                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV*spec(ispec)%dV
+                  *traj(itraj)%spec(ispec)%zwfn(:,ip))*spec(ispec)%dV
 
             spec_rho(ispec)%rho(:,ip) = spec_rho(ispec)%rho(:,ip) &
               +ztmp*conjg(zC_icwf(jtraj))*zC_icwf(itraj)&
