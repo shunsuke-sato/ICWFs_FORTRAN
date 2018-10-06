@@ -41,6 +41,6 @@ module global_variables
   real(8),allocatable :: rho_cumulative_prob(:)
 
 
-  logical,parameter :: if_symmetric_ansatz = .true.
+  logical,parameter :: if_symmetric_ansatz = .false.
 
 end module global_variables

@@ -405,14 +405,24 @@ contains
                       vector_tmp2(1:spec(ispec)%ngrid_tot,1:num_vec),&
                       spec(ispec)%ngrid_tot)
                   else if(ispec == 1 .and. jspec == 1)then
-                    call dgemm('n', 'n', &
+!                    call dgemm('n', 'n', &
+!                      spec(ispec)%ngrid_tot,&
+!                      num_vec, &
+!                      spec(jspec)%ngrid_tot, 1d0, &
+!                      gf_two_body_pot_1, &
+!                      spec(ispec)%ngrid_tot,&
+!                      vector_tmp1(1:spec(jspec)%ngrid_tot,1:num_vec),&
+!                      spec(jspec)%ngrid_tot, 0d0,&
+!                      vector_tmp2(1:spec(ispec)%ngrid_tot,1:num_vec),&
+!                      spec(ispec)%ngrid_tot)
+
+                    call dsymm('l', 'u', &
                       spec(ispec)%ngrid_tot,&
-                      num_vec, &
-                      spec(jspec)%ngrid_tot, 1d0, &
+                      num_vec, 1d0, &
                       gf_two_body_pot_1, &
                       spec(ispec)%ngrid_tot,&
-                      vector_tmp1(1:spec(jspec)%ngrid_tot,1:num_vec),&
-                      spec(jspec)%ngrid_tot, 0d0,&
+                      vector_tmp1(1:spec(ispec)%ngrid_tot,1:num_vec),&
+                      spec(ispec)%ngrid_tot, 0d0,&
                       vector_tmp2(1:spec(ispec)%ngrid_tot,1:num_vec),&
                       spec(ispec)%ngrid_tot)
                   else
